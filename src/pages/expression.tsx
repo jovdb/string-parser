@@ -1,10 +1,10 @@
 import { Link } from "waku";
 
-export default async function HomePage() {
+export default async function ExpressionPage() {
   return (
     <div>
-      <title>Home</title>
-      <Link to="/expression">Expression</Link>
+      <title>Expression</title>
+      <Link to="/">Home</Link>
     </div>
   );
 }
