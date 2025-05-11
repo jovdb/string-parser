@@ -214,6 +214,20 @@ describe("expression", () => {
         ],
       },
     ],
+    [
+      "[F()]",
+      {
+        items: [
+          {
+            type: "func",
+            value: "[F()]",
+            start: 0,
+            end: 4,
+            name: "F",
+          },
+        ],
+      },
+    ],
 
     [
       "[F(]",
@@ -234,12 +248,19 @@ describe("expression", () => {
       {
         items: [
           {
-            type: "constant",
-            value: "[F)]",
+            type: "variable",
+            value: "[Fs)]",
             start: 0,
             end: 3,
+            name: "F)*",
           },
         ],
+        error: {
+          end: 2,
+          message:
+            "Invalid character in function name ')', allowed: '[a-zA-Z0-9_-]'",
+          start: 2,
+        },
       },
     ],
     /*
@@ -265,7 +286,7 @@ describe("expression", () => {
     }
   ][];
 
-  test.for(tests.slice(0))("parse '%s'", ([expr, expected]) => {
+  test.for(tests.slice(0, 99))("parse '%s'", ([expr, expected]) => {
     const expression = new Expression(expr);
 
     const actual = {
@@ -275,29 +296,4 @@ describe("expression", () => {
 
     expect(actual).toEqual(expected);
   });
-
-  /*
-  console.log('----------');
-  const logLen = Object.keys(tests).reduce(
-    (max, cur) => Math.max(max, cur.length),
-    0
-  );
-  Object.entries(tests).every(([expr, expected]) => {
-    const expression = new Expression(expr);
-
-    const actual = {
-      items: expression.items,
-      error: expression.error,
-    };
-
-    if (JSON.stringify(actual) === JSON.stringify(expected)) {
-      // console.log(`${`'${expr}'`.padEnd(logLen + 2, ' ')}: OK`);
-      return true;
-    } else {
-      console.log(`${`'${expr}'`.padEnd(logLen + 2, ' ')}: NOK`);
-      console.log(expression.toConsoleError());
-      console.warn(JSON.stringify({ expected, actual }, null, 2));
-      return false;
-    }
-  });*/
 });

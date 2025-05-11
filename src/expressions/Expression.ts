@@ -1,5 +1,6 @@
 // Split in parts
 
+import { ParsedStack } from "vitest";
 import { BaseExpr, IExprItem } from "./BaseExpr";
 import { ConstExpr } from "./ConstExpr";
 import { FuncExpr } from "./FuncExpr";
@@ -36,11 +37,55 @@ function validateName(name: string, offsetIndex: number, type: string) {
     }
   }
 }
-const placeholderStartChar = "[";
-const placeholderEndChar = "]";
+const PLACEHOLDER_START_CHAR = "[";
+const PLACEHOLDER_END_CHAR = "]";
 
-const functionArgsStartChar = "(";
-const functionArgsEndChar = ")";
+const FUNCTION_ARGS_START_CHAR = "(";
+const FUNCTION_ARGS_END_CHAR = ")";
+
+type TokenStackItem =
+  | {
+      type: typeof PLACEHOLDER_START_CHAR;
+      index: number;
+    }
+  | {
+      type: typeof FUNCTION_ARGS_START_CHAR;
+      index: number;
+      name: string;
+    }
+  | {
+      type: typeof FUNCTION_ARGS_END_CHAR;
+      index: number;
+    };
+
+function createTokenStack(debug?: (s: string) => void) {
+  const stack: TokenStackItem[] = [];
+
+  return {
+    stack,
+    push(item: (typeof stack)[number]) {
+      stack.push(item);
+      debug?.(`TokenStack: pushed item: ${JSON.stringify(item)}`);
+    },
+    pop() {
+      const item = stack.pop();
+      debug?.(`TokenStack: popped item: ${JSON.stringify(item)}`);
+      return item;
+    },
+    isLastToken(type: TokenStackItem["type"], pos = -1) {
+      const item = stack.at(pos);
+      return item?.type === type ? item : undefined;
+    },
+    areLastTokens(types: TokenStackItem["type"][]) {
+      const items = stack.slice(-types.length);
+      const areSame = items.every((item, index) => item.type === types[index]);
+      if (areSame) {
+        return items;
+      }
+      return undefined;
+    },
+  };
+}
 
 function parseExpression(expression: string): {
   items: BaseExpr<string>[];
@@ -53,43 +98,47 @@ function parseExpression(expression: string): {
   let nextItemStartIndex = 0;
   let index = 0;
 
-  const stack: (
-    | {
-        type: typeof placeholderStartChar;
-        index: number;
-      }
-    | {
-        type: typeof functionArgsStartChar;
-        index: number;
-        name: string;
-      }
-    | {
-        type: typeof functionArgsEndChar;
-        index: number;
-      }
-  )[] = [];
+  const debug = (s: string) => {
+    console.log(s);
+  };
 
-  for (index = 0; index < expression.length; index++) {
+  // Possible token combinations tokens:
+  // []  : variable
+  // [)] : constant (no function args started)
+  // [(] : constant (unclosed function args)
+  // [()]: function
+  // [)(]: constant
+
+  const tokenStack = createTokenStack(debug);
+
+  for (index; index < expression.length; index++) {
     const char = expression[index];
 
     switch (char) {
       // Start placeholder block: []
-      case placeholderStartChar: {
-        stack.push({
-          type: char,
-          index,
-        });
+      case PLACEHOLDER_START_CHAR: {
+        // Current only supports one level of nesting
+        if (tokenStack.stack.length === 0) {
+          tokenStack.push({
+            type: char,
+            index,
+          });
+        }
         break;
       }
 
       // Start arguments block: ()
-      case functionArgsStartChar: {
+      case FUNCTION_ARGS_START_CHAR: {
         // '(' only has meaning in a '[]' block
-
-        const lastInStack = stack.at(-1);
-        if (lastInStack?.type === placeholderStartChar) {
-          const name = expression.substring(lastInStack.index + 1, index);
-          stack.push({
+        const lastPlaceholderStart = tokenStack.isLastToken(
+          PLACEHOLDER_START_CHAR
+        );
+        if (lastPlaceholderStart) {
+          const name = expression.substring(
+            lastPlaceholderStart.index + 1,
+            index
+          );
+          tokenStack.push({
             type: char,
             index,
             name,
@@ -98,10 +147,12 @@ function parseExpression(expression: string): {
         break;
       }
 
-      case functionArgsEndChar: {
-        const lastInStack = stack.at(-1);
-        if (lastInStack?.type === functionArgsStartChar) {
-          stack.push({
+      case FUNCTION_ARGS_END_CHAR: {
+        const lastFunctionArgsStart = tokenStack.isLastToken(
+          FUNCTION_ARGS_START_CHAR
+        );
+        if (lastFunctionArgsStart) {
+          tokenStack.push({
             type: char,
             index,
           });
@@ -109,12 +160,13 @@ function parseExpression(expression: string): {
         break;
       }
 
-      case placeholderEndChar: {
-        const lastInStack = stack.at(-1);
-        if (lastInStack) {
-          // Variable?
-          if (lastInStack?.type === placeholderStartChar) {
-            const placeholderStart = lastInStack.index;
+      case PLACEHOLDER_END_CHAR:
+        {
+          const lastPlaceholderStart = tokenStack.isLastToken(
+            PLACEHOLDER_START_CHAR
+          );
+          if (lastPlaceholderStart) {
+            const placeholderStart = lastPlaceholderStart.index;
             const value = expression.substring(placeholderStart, index + 1);
             if (value.length > 2) {
               // Before [ = Constant prefix
@@ -149,18 +201,29 @@ function parseExpression(expression: string): {
               // nextItemStartIndex = index + 1;
               //stack.pop();
             }
-            stack.pop();
+            tokenStack.pop();
           }
 
           // Function
-          else if (lastInStack?.type === functionArgsEndChar) {
-            const prevInStack = stack.at(-2);
-            if (prevInStack?.type === functionArgsStartChar) {
-              const functionName = prevInStack.name;
-
-              const thirdInStack = stack.at(-3);
-              if (thirdInStack?.type === placeholderStartChar) {
-                const placeholderStart = thirdInStack.index;
+          const lastFunctionArgsEnd = tokenStack.isLastToken(
+            FUNCTION_ARGS_END_CHAR
+          );
+          if (lastFunctionArgsEnd) {
+            const lastFunctionArgsStart = tokenStack.isLastToken(
+              FUNCTION_ARGS_START_CHAR,
+              -2
+            );
+            if (lastFunctionArgsStart) {
+              const lastPlaceholderStart = tokenStack.isLastToken(
+                PLACEHOLDER_START_CHAR,
+                -3
+              );
+              if (lastPlaceholderStart) {
+                const placeholderStart = lastPlaceholderStart.index;
+                const functionName = expression.substring(
+                  placeholderStart + 1,
+                  lastFunctionArgsStart.index
+                );
 
                 error ??= validateName(
                   functionName,
@@ -193,38 +256,39 @@ function parseExpression(expression: string): {
                   items.push(funcExpr);
                   nextItemStartIndex = index + 1;
                 }
-                stack.pop(); // )
+                tokenStack.pop(); // )
               }
-              stack.pop(); // (
+              tokenStack.pop(); // (
             }
-            stack.pop(); // ]
+            tokenStack.pop(); // ]
           }
         }
         break;
-      }
     }
   }
 
   // Rest
+  console.log(expression, "rest", index, nextItemStartIndex);
   if (index > nextItemStartIndex) {
     const value = expression.substring(nextItemStartIndex, index);
-    console.log("rest", index, nextItemStartIndex, value);
+    console.log("rest2", index, nextItemStartIndex, value);
     items.push(new ConstExpr(value, nextItemStartIndex, index - 1));
   }
 
+  /*
   if (!error) {
     const lastInStack = stack.at(-1);
     if (lastInStack) {
       // TODO: ( in stack
-      /*
       error = {
         message: `Unclosed block: '${lastInStack.type}'`,
         start: lastInStack.index,
         end: index - 1,
       };
-      */
+      
     }
   }
+  */
 
   return {
     items,
