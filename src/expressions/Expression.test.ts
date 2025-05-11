@@ -1,22 +1,22 @@
-import { describe, expect, test } from 'vitest';
-import { IExprItem } from './BaseExpr';
-import { ParseError, Expression } from './expression';
+import { describe, expect, test } from "vitest";
+import { IExprItem } from "./BaseExpr";
+import { ParseError, Expression } from "./expression";
 
-describe('expression', () => {
+describe("expression", () => {
   const tests = [
     [
-      '',
+      "",
       {
         items: [],
       },
     ],
     [
-      'S',
+      "S",
       {
         items: [
           {
-            type: 'constant',
-            value: 'S',
+            type: "constant",
+            value: "S",
             start: 0,
             end: 0,
           },
@@ -24,12 +24,12 @@ describe('expression', () => {
       },
     ],
     [
-      ' S',
+      " S",
       {
         items: [
           {
-            type: 'constant',
-            value: ' S',
+            type: "constant",
+            value: " S",
             start: 0,
             end: 1,
           },
@@ -37,12 +37,12 @@ describe('expression', () => {
       },
     ],
     [
-      ' S ',
+      " S ",
       {
         items: [
           {
-            type: 'constant',
-            value: ' S ',
+            type: "constant",
+            value: " S ",
             start: 0,
             end: 2,
           },
@@ -50,9 +50,9 @@ describe('expression', () => {
       },
     ],
     [
-      '[',
+      "[",
       {
-        items: [{ type: 'constant', value: '[', start: 0, end: 0 }],
+        items: [{ type: "constant", value: "[", start: 0, end: 0 }],
         /*
         error: {
           message: "Unclosed block: '['",
@@ -62,11 +62,11 @@ describe('expression', () => {
         */
       },
     ],
-    [']', { items: [{ type: 'constant', value: ']', start: 0, end: 0 }] }],
+    ["]", { items: [{ type: "constant", value: "]", start: 0, end: 0 }] }],
     [
-      '[S',
+      "[S",
       {
-        items: [{ type: 'constant', value: '[S', start: 0, end: 1 }],
+        items: [{ type: "constant", value: "[S", start: 0, end: 1 }],
         /*
         error: {
           message: "Unclosed block: '['",
@@ -77,12 +77,12 @@ describe('expression', () => {
       },
     ],
     [
-      '[]',
+      "[]",
       {
         items: [
           {
-            type: 'constant',
-            value: '[]',
+            type: "constant",
+            value: "[]",
             start: 0,
             end: 1,
           },
@@ -96,12 +96,12 @@ describe('expression', () => {
       },
     ],
     [
-      'S]',
+      "S]",
       {
         items: [
           {
-            type: 'constant',
-            value: 'S]',
+            type: "constant",
+            value: "S]",
             start: 0,
             end: 1,
           },
@@ -115,15 +115,15 @@ describe('expression', () => {
       },
     ],
     [
-      '[F]',
+      "[F]",
       {
         items: [
           {
-            type: 'variable',
-            value: '[F]',
+            type: "variable",
+            value: "[F]",
             start: 0,
             end: 2,
-            name: 'F',
+            name: "F",
           },
         ],
         /*
@@ -135,59 +135,59 @@ describe('expression', () => {
       },
     ],
     [
-      '[F][G]',
+      "[F][G]",
       {
         items: [
           {
-            type: 'variable',
-            value: '[F]',
+            type: "variable",
+            value: "[F]",
             start: 0,
             end: 2,
-            name: 'F',
+            name: "F",
           },
           {
-            type: 'variable',
-            value: '[G]',
+            type: "variable",
+            value: "[G]",
             start: 3,
             end: 5,
-            name: 'G',
+            name: "G",
           },
         ],
       },
     ],
     [
-      '1[F]2[G]3',
+      "1[F]2[G]3",
       {
         items: [
           {
-            type: 'constant',
-            value: '1',
+            type: "constant",
+            value: "1",
             start: 0,
             end: 0,
           },
           {
-            type: 'variable',
-            value: '[F]',
+            type: "variable",
+            value: "[F]",
             start: 1,
             end: 3,
-            name: 'F',
+            name: "F",
           },
           {
-            type: 'constant',
-            value: '2',
+            type: "constant",
+            value: "2",
             start: 4,
             end: 4,
           },
           {
-            type: 'variable',
-            value: '[G]',
+            type: "variable",
+            value: "[G]",
             start: 5,
             end: 7,
-            name: 'G',
+            name: "G",
           },
           {
-            type: 'constant',
-            value: '3',
+            type: "constant",
+            value: "3",
             start: 8,
             end: 8,
           },
@@ -195,57 +195,54 @@ describe('expression', () => {
       },
     ],
     [
-      'S[F()]',
+      "S[F()]",
       {
         items: [
           {
-            type: 'constant',
-            value: 'S',
+            type: "constant",
+            value: "S",
             start: 0,
-            end: 1,
+            end: 0,
           },
           {
-            type: 'func',
-            value: '[F()]',
-            start: 0,
-            end: 6,
-            name: '[',
+            type: "func",
+            value: "[F()]",
+            start: 1,
+            end: 5,
+            name: "F",
           },
         ],
-        error: {
-          message: "Unclosed block: '['",
-          start: 0,
-          end: 5,
-        },
+      },
+    ],
+
+    [
+      "[F(]",
+      {
+        items: [
+          {
+            type: "constant",
+            value: "[F(]",
+            start: 0,
+            end: 3,
+          },
+        ],
+      },
+    ],
+
+    [
+      "[F)]",
+      {
+        items: [
+          {
+            type: "constant",
+            value: "[F)]",
+            start: 0,
+            end: 3,
+          },
+        ],
       },
     ],
     /*
-    [
-      '[F(]',
-      {
-        items: [
-          {
-            type: 'func',
-            value: '[F(]',
-            start: 0,
-            end: 3,
-          },
-        ],
-      },
-    ],
-    [
-      '[F)]',
-      {
-        items: [
-          {
-            type: 'func',
-            value: '[F)]',
-            start: 0,
-            end: 3,
-          },
-        ],
-      },
-    ],
     [
       '[F()]',
       {
@@ -268,7 +265,7 @@ describe('expression', () => {
     }
   ][];
 
-  test.for(tests.slice(11))("parse '%s'", ([expr, expected]) => {
+  test.for(tests.slice(0))("parse '%s'", ([expr, expected]) => {
     const expression = new Expression(expr);
 
     const actual = {
