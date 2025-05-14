@@ -1,8 +1,10 @@
 import { BaseExpr } from "./BaseExpr";
 
 export class ConstExpr extends BaseExpr<"constant"> {
-  constructor(value: string, start: number, end: number) {
-    super("constant", value, start, end);
+  private value: string;
+  constructor(start: number, end: number, value: string) {
+    super("constant", start, end);
+    this.value = value;
   }
 
   evaluate() {

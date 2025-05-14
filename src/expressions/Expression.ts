@@ -1,316 +1,161 @@
-// Split in parts
-
-import { ParsedStack } from "vitest";
+import { b } from "vitest/dist/chunks/suite.d.FvehnV49.js";
 import { BaseExpr, IExprItem } from "./BaseExpr";
 import { ConstExpr } from "./ConstExpr";
 import { FuncExpr } from "./FuncExpr";
+import { IToken, lexer } from "./Lexer";
 import { VarExpr } from "./VarExpr";
 
-export type ExpressionType = IExprItem[];
-
-export interface ParseError {
+export interface ISyntaxError {
   message: string;
   start: number;
   end: number;
 }
+type ErrorCodes = "UNSUPPORTED" | "INVALID_BLOCK" | "UNTERMINATED_BLOCK";
 
-function validateName(name: string, offsetIndex: number, type: string) {
-  const regExp = new RegExp("[a-zA-Z0-9_-]");
-  for (let index = 0; index < name.length; index++) {
-    const char = name[index]!;
-    if (index === 0) {
-      if (!new RegExp("[a-zA-Z_]").test(char)) {
-        return {
-          message: `Invalid first character of ${type} name '${char}', allowed: '[a-zA-Z_]'`,
-          start: offsetIndex,
-          end: offsetIndex,
-        };
+function createError({
+  code,
+  start,
+  end,
+  value,
+}: {
+  code: ErrorCodes;
+  start: number;
+  end: number;
+  value?: string;
+}) {
+  let errorMessage = "";
+  switch (code) {
+    case "UNTERMINATED_BLOCK": {
+      errorMessage = `Unterminated block: '${value}'`;
+      break;
+    }
+    case "INVALID_BLOCK": {
+      errorMessage = `Invalid variable of function definition`;
+      break;
+    }
+    case "UNSUPPORTED": {
+      errorMessage = `Unsupported: '${value}'`;
+      break;
+    }
+    default: {
+      errorMessage = `Unknown error code: '${code}'`;
+      break;
+    }
+  }
+  const formattedMessage = `(${start}:${end}) error: ${errorMessage}`;
+  return {
+    code,
+    message: formattedMessage,
+    start,
+    end,
+  };
+}
+
+export function parser(input: string) {
+  const stack: IToken[] = [];
+  const ast: BaseExpr<string>[] = [];
+  let error: ISyntaxError | undefined;
+
+  const tokens = [...lexer(input)];
+  console.log("Tokens:", tokens);
+
+  for (const token of tokens) {
+    if (error) break;
+
+    // Constant
+    if (token.type === "constant") {
+      const value = input.slice(token.start, token.end + 1);
+      ast.push(new ConstExpr(token.start, token.end, value));
+    } else if (token.type === "]") {
+      // Validate the parts
+      const blockStartIndex = stack.findLastIndex(
+        (token) => token.type === "["
+      );
+      const blockTokens = stack.slice(blockStartIndex);
+      const format =
+        blockTokens.map((token) => token.type).join("") + token.type;
+
+      if (format === "[name]") {
+        // Variable
+        const name = input.slice(
+          blockTokens[1]!.start,
+          blockTokens[1]!.end + 1
+        );
+        ast.push(new VarExpr(blockTokens[0]!.start, token.end, name));
+      } else if (format === "[name()]") {
+        // Function
+        const name = input.slice(
+          blockTokens[1]!.start,
+          blockTokens[1]!.end + 1
+        );
+        ast.push(new FuncExpr(blockTokens[0]!.start, token.end, name));
+      } else {
+        // Invalid block
+        error ??= createError({
+          code: "INVALID_BLOCK",
+          start: blockTokens[0]!.start + 1,
+          end: token.end - 1,
+        });
+        // Add as constant to the AST
+        /*const start = blockTokens[0]!.start;
+        const end = token.end;
+        const value = input.slice(start, end + 1);
+        ast.push(new ConstExpr(start, end, value));
+        */
       }
+      stack.splice(-blockTokens.length, blockTokens.length);
     } else {
-      if (!regExp.test(char)) {
-        return {
-          message: `Invalid character in ${type} name '${char}', allowed: '[a-zA-Z0-9_-]'`,
-          start: offsetIndex + index,
-          end: offsetIndex + index,
-        };
-      }
+      stack.push(token);
     }
   }
-}
-const PLACEHOLDER_START_CHAR = "[";
-const PLACEHOLDER_END_CHAR = "]";
 
-const FUNCTION_ARGS_START_CHAR = "(";
-const FUNCTION_ARGS_END_CHAR = ")";
+  // Check for unterminated blocks
+  const lastBlockToken = stack.findLast(
+    (token) => token.type === "[" || token.type === "("
+  )!;
+  if (lastBlockToken) {
+    error ??= createError({
+      code: "UNTERMINATED_BLOCK",
+      start: lastBlockToken.start,
+      end: lastBlockToken.end,
+      value: lastBlockToken.type,
+    });
+  }
 
-type TokenStackItem =
-  | {
-      type: typeof PLACEHOLDER_START_CHAR;
-      index: number;
-    }
-  | {
-      type: typeof FUNCTION_ARGS_START_CHAR;
-      index: number;
-      name: string;
-    }
-  | {
-      type: typeof FUNCTION_ARGS_END_CHAR;
-      index: number;
+  // Stack expected to be empty
+  if (stack.length > 0) {
+    error ??= {
+      message: `Parser error: Unexpected stack content: '${stack
+        .map((t) => t.type)
+        .join(",")}'`,
+      start: stack.at(0)!.start,
+      end: stack.at(-1)!.end,
     };
-
-function createTokenStack(debug?: (s: string) => void) {
-  const stack: TokenStackItem[] = [];
+  }
 
   return {
-    stack,
-    push(item: (typeof stack)[number]) {
-      stack.push(item);
-      debug?.(`TokenStack: pushed item: ${JSON.stringify(item)}`);
-    },
-    pop() {
-      const item = stack.pop();
-      debug?.(`TokenStack: popped item: ${JSON.stringify(item)}`);
-      return item;
-    },
-    isLastToken(type: TokenStackItem["type"], pos = -1) {
-      const item = stack.at(pos);
-      return item?.type === type ? item : undefined;
-    },
-    areLastTokens(types: TokenStackItem["type"][]) {
-      const items = stack.slice(-types.length);
-      const areSame = items.every((item, index) => item.type === types[index]);
-      if (areSame) {
-        return items;
-      }
-      return undefined;
-    },
-  };
-}
-
-function parseExpression(expression: string): {
-  items: BaseExpr<string>[];
-  error?: ParseError | undefined;
-} {
-  const items: BaseExpr<string>[] = [];
-  let error: ParseError | undefined = undefined;
-
-  /** Move this index after processed blocks */
-  let nextItemStartIndex = 0;
-  let index = 0;
-
-  const debug = (s: string) => {
-    console.log(s);
-  };
-
-  // Possible token combinations tokens:
-  // []  : variable
-  // [)] : constant (no function args started)
-  // [(] : constant (unclosed function args)
-  // [()]: function
-  // [)(]: constant
-
-  const tokenStack = createTokenStack(debug);
-
-  for (index; index < expression.length; index++) {
-    const char = expression[index];
-
-    switch (char) {
-      // Start placeholder block: []
-      case PLACEHOLDER_START_CHAR: {
-        // Current only supports one level of nesting
-        if (tokenStack.stack.length === 0) {
-          tokenStack.push({
-            type: char,
-            index,
-          });
-        }
-        break;
-      }
-
-      // Start arguments block: ()
-      case FUNCTION_ARGS_START_CHAR: {
-        // '(' only has meaning in a '[]' block
-        const lastPlaceholderStart = tokenStack.isLastToken(
-          PLACEHOLDER_START_CHAR
-        );
-        if (lastPlaceholderStart) {
-          const name = expression.substring(
-            lastPlaceholderStart.index + 1,
-            index
-          );
-          tokenStack.push({
-            type: char,
-            index,
-            name,
-          });
-        }
-        break;
-      }
-
-      case FUNCTION_ARGS_END_CHAR: {
-        const lastFunctionArgsStart = tokenStack.isLastToken(
-          FUNCTION_ARGS_START_CHAR
-        );
-        if (lastFunctionArgsStart) {
-          tokenStack.push({
-            type: char,
-            index,
-          });
-        }
-        break;
-      }
-
-      case PLACEHOLDER_END_CHAR:
-        {
-          const lastPlaceholderStart = tokenStack.isLastToken(
-            PLACEHOLDER_START_CHAR
-          );
-          if (lastPlaceholderStart) {
-            const placeholderStart = lastPlaceholderStart.index;
-            const value = expression.substring(placeholderStart, index + 1);
-            if (value.length > 2) {
-              // Before [ = Constant prefix
-              if (placeholderStart > nextItemStartIndex) {
-                const value = expression.substring(
-                  nextItemStartIndex,
-                  placeholderStart
-                );
-                items.push(
-                  new ConstExpr(value, nextItemStartIndex, placeholderStart - 1)
-                );
-              }
-
-              // Variable part
-              if (index > placeholderStart) {
-                const name = expression.substring(placeholderStart + 1, index);
-
-                error ??= validateName(name, placeholderStart + 1, "function");
-
-                const varExpr = new VarExpr(
-                  value,
-                  placeholderStart,
-                  index,
-                  name
-                );
-                items.push(varExpr);
-              }
-
-              nextItemStartIndex = index + 1;
-            } else {
-              // Allow empty placeholder
-              // nextItemStartIndex = index + 1;
-              //stack.pop();
-            }
-            tokenStack.pop();
-          }
-
-          // Function
-          const lastFunctionArgsEnd = tokenStack.isLastToken(
-            FUNCTION_ARGS_END_CHAR
-          );
-          if (lastFunctionArgsEnd) {
-            const lastFunctionArgsStart = tokenStack.isLastToken(
-              FUNCTION_ARGS_START_CHAR,
-              -2
-            );
-            if (lastFunctionArgsStart) {
-              const lastPlaceholderStart = tokenStack.isLastToken(
-                PLACEHOLDER_START_CHAR,
-                -3
-              );
-              if (lastPlaceholderStart) {
-                const placeholderStart = lastPlaceholderStart.index;
-                const functionName = expression.substring(
-                  placeholderStart + 1,
-                  lastFunctionArgsStart.index
-                );
-
-                error ??= validateName(
-                  functionName,
-                  placeholderStart + 1,
-                  "function"
-                );
-
-                if (!error) {
-                  // Before [ = Constant prefix
-                  if (placeholderStart > nextItemStartIndex) {
-                    const value = expression.substring(
-                      nextItemStartIndex,
-                      placeholderStart
-                    );
-                    items.push(
-                      new ConstExpr(
-                        value,
-                        nextItemStartIndex,
-                        placeholderStart - 1
-                      )
-                    );
-                  }
-
-                  const funcExpr = new FuncExpr(
-                    expression.substring(placeholderStart, index + 1),
-                    placeholderStart,
-                    index,
-                    functionName
-                  );
-                  items.push(funcExpr);
-                  nextItemStartIndex = index + 1;
-                }
-                tokenStack.pop(); // )
-              }
-              tokenStack.pop(); // (
-            }
-            tokenStack.pop(); // ]
-          }
-        }
-        break;
-    }
-  }
-
-  // Rest
-  console.log(expression, "rest", index, nextItemStartIndex);
-  if (index > nextItemStartIndex) {
-    const value = expression.substring(nextItemStartIndex, index);
-    console.log("rest2", index, nextItemStartIndex, value);
-    items.push(new ConstExpr(value, nextItemStartIndex, index - 1));
-  }
-
-  /*
-  if (!error) {
-    const lastInStack = stack.at(-1);
-    if (lastInStack) {
-      // TODO: ( in stack
-      error = {
-        message: `Unclosed block: '${lastInStack.type}'`,
-        start: lastInStack.index,
-        end: index - 1,
-      };
-      
-    }
-  }
-  */
-
-  return {
-    items,
     error,
+    ast,
   };
 }
 
 export class Expression extends BaseExpr<"expression"> {
-  readonly items: BaseExpr<string>[];
-  readonly error?: ParseError | undefined;
+  readonly ast: BaseExpr<string>[];
+  readonly error?: ISyntaxError | undefined;
+  readonly value: string;
 
   constructor(value: string) {
-    super("expression", value, 0, value.length);
+    super("expression", 0, value.length);
 
-    const result = parseExpression(value);
-    this.items = result.items;
+    const result = parser(value);
+    this.value = value;
+    this.ast = result.error ? [] : result.ast;
     this.error = result.error;
   }
 
   public getAtIndex(charIndex: number) {
-    const items: IExprItem[] = [];
-    this.items.some((expr) => {
+    const items: BaseExpr<string>[] = [];
+    this.ast.some((expr) => {
       if (charIndex >= expr.start && charIndex <= expr.end) {
         items.push(expr);
         // TODO: Children
@@ -337,6 +182,6 @@ export class Expression extends BaseExpr<"expression"> {
   }
 
   public evaluate() {
-    return this.items.map((item) => item.evaluate()).join("");
+    return this.ast.map((item) => item.evaluate()).join("");
   }
 }

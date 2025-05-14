@@ -3,13 +3,13 @@ import { BaseExpr } from "./BaseExpr";
 export class FuncExpr extends BaseExpr<"func"> {
   readonly name: string;
 
-  constructor(value: string, start: number, end: number, name: string) {
-    super("func", value, start, end);
+  constructor(start: number, end: number, name: string) {
+    super("func", start, end);
     this.name = name;
   }
 
   evaluate() {
-    return this.value;
+    return `SWAP(${this.name}())`;
   }
 }
 
