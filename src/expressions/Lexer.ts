@@ -2,37 +2,56 @@
 
 import { createError, ISyntaxError } from "./Expression";
 
-export interface IBlockStartToken<TType extends TokenType = TokenType> {
-  type: TType;
-  start: number;
-}
+// Because tokens have no double meaning yet, I used the character as token name
+export type TokenType =
+  | "constant" // constant value
+  | "name" // function or variable name
+  | "(" // Starts a function
+  | ")" // Ends a function
+  | "[" // Starts a variable or function
+  | "]" // Ends a variable or function
+  | '"' // Start or end of a function argument
+  | ","; // Function argument separator
 
-export interface IToken<TType extends TokenType = TokenType>
-  extends IBlockStartToken<TType> {
+export interface IToken<TType extends TokenType = TokenType> {
+  type: TType;
+  /** 0-based index of the first character position in the input string */
+  start: number;
+  /** 0-based index of the last character position in the input string */
   end: number;
+  /** example: '[', '(' or '"'] */
+  requiresClosing?: boolean;
+  /** Unescaped value */
+  value?: string | undefined;
 }
 
 export class Token<TType extends TokenType> implements IToken<TType> {
   type: TType;
   start: number;
   end: number;
+  requiresClosing: boolean;
+  value: string | undefined;
 
-  constructor(type: TType, start: number, end: number, value: string) {
+  constructor(
+    type: TType,
+    start: number,
+    {
+      end = start,
+      requiresClosing = false,
+      value,
+    }: {
+      end?: number;
+      requiresClosing?: boolean;
+      value?: string;
+    } = {}
+  ) {
     this.type = type;
     this.start = start;
     this.end = end;
+    this.requiresClosing = requiresClosing;
+    this.value = value;
   }
 }
-
-export type TokenType =
-  | "constant"
-  | "name" // function or variable name
-  | "("
-  | ")"
-  | "["
-  | "]"
-  | '"'
-  | ",";
 
 export function* lexer(
   input: string,
@@ -40,7 +59,7 @@ export function* lexer(
 ) {
   let buffer = "";
   let escapeNext = false;
-  let tokenStack: IBlockStartToken[] = [];
+  let tokenStack: IToken[] = [];
   let index = -1;
   let lastTokenEndIndex = -1;
 
@@ -60,7 +79,10 @@ export function* lexer(
   function getBeforeToken() {
     if (buffer.length > 0) {
       buffer = "";
-      return new Token(getTextType(), lastTokenEndIndex + 1, index - 1, buffer);
+      return new Token(getTextType(), lastTokenEndIndex + 1, {
+        end: index - 1,
+        value: buffer,
+      });
     }
     return undefined;
   }
@@ -92,7 +114,9 @@ export function* lexer(
         }
 
         // Variable or function start
-        const token = new Token(char, index, index, buffer);
+        const token = new Token(char, index, {
+          requiresClosing: true,
+        });
         tokenStack.push(token);
         lastTokenEndIndex = index;
         yield token;
@@ -107,7 +131,9 @@ export function* lexer(
         }
 
         // Function start
-        const token = new Token(char, index, index, buffer);
+        const token = new Token(char, index, {
+          requiresClosing: true,
+        });
         tokenStack.push(token);
         lastTokenEndIndex = index;
         yield token;
@@ -122,7 +148,7 @@ export function* lexer(
         }
 
         // Variable or function end
-        const token = new Token(char, index, index, buffer);
+        const token = new Token(char, index);
         tokenStack.pop(); // Remove [
         lastTokenEndIndex = index;
         yield token;
@@ -137,9 +163,44 @@ export function* lexer(
         }
 
         // Function arguments end
-        const token = new Token(char, index, index, buffer);
+        const token = new Token(char, index);
         tokenStack.pop(); // remove (
         lastTokenEndIndex = index;
+        yield token;
+        continue;
+      }
+    } else if (char === '"') {
+      if (lastStackItem?.type === "(") {
+        // onError?.(
+        //   createError({
+        //     code: "ARGUMENT_SEPARATOR_REQUIRED",
+        //     start: index,
+        //     end: index,
+        //   })
+        // );
+        // Argument start
+        const token = new Token(char, index, {
+          requiresClosing: true,
+        });
+        tokenStack.push(token);
+        lastTokenEndIndex = index;
+        yield token;
+        continue;
+      } else if (lastStackItem?.type === '"') {
+        // Argument end
+        const token = new Token(char, index);
+        tokenStack.pop();
+        lastTokenEndIndex = index;
+
+        yield token;
+        continue;
+      }
+    } else if (char === ",") {
+      if (lastStackItem?.type === "(") {
+        // Args separator
+        const token = new Token(char, index);
+        lastTokenEndIndex = index;
+        tokenStack.push(token); // push so we can check it at next
         yield token;
         continue;
       }
@@ -184,18 +245,21 @@ export function* lexer(
   }
 
   if (buffer.length > 0) {
-    yield new Token(getTextType(), lastTokenEndIndex + 1, index, buffer);
+    yield new Token(getTextType(), lastTokenEndIndex + 1, {
+      end: index,
+      value: buffer,
+    });
   }
 
   // Expected token stack to be empty
-  if (tokenStack.length > 0) {
-    const lastToken = tokenStack.at(-1)!;
+  const unclosedToken = tokenStack.findLast((token) => token.requiresClosing);
+  if (unclosedToken) {
     onError?.(
       createError({
         code: "UNTERMINATED_BLOCK",
-        start: lastToken.start,
-        end: lastToken.start,
-        value: lastToken?.type,
+        start: unclosedToken.start,
+        end: index,
+        value: unclosedToken?.type,
       })
     );
   }

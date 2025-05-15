@@ -25,6 +25,10 @@ export function Token({
         style={{
           whiteSpace: "pre",
           background: token.type === "name" ? "#ddf" : "#eee",
+          color:
+            token.type === "name" || token.type === "constant"
+              ? "#000"
+              : "#888",
           padding: "0.2rem",
           margin: "0 0.2rem",
           borderRadius: "2px",

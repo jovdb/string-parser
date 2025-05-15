@@ -1,4 +1,3 @@
-import { b } from "vitest/dist/chunks/suite.d.FvehnV49.js";
 import { BaseExpr, IExprItem } from "./BaseExpr";
 import { ConstExpr } from "./ConstExpr";
 import { FuncExpr } from "./FuncExpr";
@@ -11,7 +10,8 @@ type ErrorCodes =
   | "UNTERMINATED_BLOCK"
   | "INVALID_BLOCK_NAME_CHAR"
   | "NO_CHARS_AFTER_FUNCTION"
-  | "NO_CHARS_BETWEEN_ARGUMENTS";
+  | "NO_CHARS_BETWEEN_ARGUMENTS"
+  | "ARGUMENT_SEPARATOR_REQUIRED";
 
 export interface ISyntaxError {
   code: ErrorCodes;
@@ -54,7 +54,11 @@ export function createError({
       break;
     }
     case "NO_CHARS_BETWEEN_ARGUMENTS": {
-      errorMessage = `No extra characters allowed between function arguments`;
+      errorMessage = `No extra characters allowed between function arguments. Wrap function arguments between '"'"`;
+      break;
+    }
+    case "ARGUMENT_SEPARATOR_REQUIRED": {
+      errorMessage = `Argument separator required: ','`;
       break;
     }
     default: {
@@ -178,6 +182,7 @@ export function parser(input: string) {
     }
   }
 
+  /* Already done by lexer
   // Check for unterminated blocks
   const lastBlockToken = tokenStack.findLast(
     (token) => token.type === "[" || token.type === "("
@@ -190,6 +195,7 @@ export function parser(input: string) {
       value: lastBlockToken.type,
     });
   }
+  */
 
   // Stack expected to be empty
   if (tokenStack.length > 0) {
