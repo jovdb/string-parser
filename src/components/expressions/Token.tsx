@@ -36,7 +36,7 @@ export function Token({
         }}
         title={`(${token.start}-${token.end}): ${token.type}`}
       >
-        {input?.slice(token.start, token.end + 1)}
+        {token?.value}
       </code>
     </span>
   );

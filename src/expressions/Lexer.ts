@@ -38,7 +38,7 @@ export class Token<TType extends TokenType> implements IToken<TType> {
     {
       end = start,
       requiresClosing = false,
-      value,
+      value = type,
     }: {
       end?: number;
       requiresClosing?: boolean;
@@ -78,11 +78,12 @@ export function* lexer(
 
   function getBeforeToken() {
     if (buffer.length > 0) {
-      buffer = "";
-      return new Token(getTextType(), lastTokenEndIndex + 1, {
+      const token = new Token(getTextType(), lastTokenEndIndex + 1, {
         end: index - 1,
         value: buffer,
       });
+      buffer = "";
+      return token;
     }
     return undefined;
   }
@@ -91,21 +92,20 @@ export function* lexer(
     index++;
     const lastStackItem = tokenStack.at(-1);
 
-    if (escapeNext) {
+    if (char === "\\") {
+      escapeNext = true;
+      continue;
+    } else if (escapeNext) {
+      // Add to buffer, don't interpret as special char
       buffer += char;
       escapeNext = false;
       continue;
-    } else if (char === "\\") {
-      escapeNext = true;
-      continue;
-    }
-
-    if (char === "[") {
+    } else if (char === "[") {
       if (
         // new block
         tokenStack.length === 0 ||
         // function argument
-        lastStackItem?.type === "("
+        (lastStackItem?.type === '"' && lastStackItem.requiresClosing)
       ) {
         // Before [
         const beforeToken = getBeforeToken();
@@ -141,6 +141,19 @@ export function* lexer(
       }
     } else if (char === "]") {
       if (lastStackItem?.type === "[") {
+        // Empty
+        if (lastStackItem.end === index - 1) {
+          onError?.(
+            createError({
+              code: "EMPTY_BLOCK",
+              start: lastStackItem.start,
+              end: index,
+            })
+          );
+          tokenStack.pop(); // Remove [
+          continue;
+        }
+
         // Before [
         const beforeToken = getBeforeToken();
         if (beforeToken) {
@@ -187,6 +200,12 @@ export function* lexer(
         yield token;
         continue;
       } else if (lastStackItem?.type === '"') {
+        // Before closing "
+        const beforeToken = getBeforeToken();
+        if (beforeToken) {
+          yield beforeToken;
+        }
+
         // Argument end
         const token = new Token(char, index);
         tokenStack.pop();
@@ -205,6 +224,9 @@ export function* lexer(
         continue;
       }
     }
+
+    // Normal character
+    buffer += char;
 
     // Validate allowed input characters
 
@@ -239,9 +261,6 @@ export function* lexer(
         })
       );
     }
-
-    // Normal character
-    buffer += char;
   }
 
   if (buffer.length > 0) {

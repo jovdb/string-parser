@@ -6,7 +6,7 @@ import { VarExpr } from "./VarExpr";
 
 type ErrorCodes =
   | "UNSUPPORTED"
-  | "INVALID_BLOCK"
+  | "EMPTY_BLOCK"
   | "UNTERMINATED_BLOCK"
   | "INVALID_BLOCK_NAME_CHAR"
   | "NO_CHARS_AFTER_FUNCTION"
@@ -37,8 +37,8 @@ export function createError({
       errorMessage = `Unterminated block: '${value}'`;
       break;
     }
-    case "INVALID_BLOCK": {
-      errorMessage = `Invalid variable of function definition`;
+    case "EMPTY_BLOCK": {
+      errorMessage = `Empty block. Remove or add a variable or function name`;
       break;
     }
     case "UNSUPPORTED": {
@@ -112,7 +112,7 @@ export function parser(input: string) {
     /** Current ast level */
     let ast = astStack.at(-1)!;
 
-    const lastToken = tokenStack.at(-1);
+    const lastStackItem = tokenStack.at(-1);
 
     // Constant
     switch (token.type) {
@@ -122,7 +122,7 @@ export function parser(input: string) {
       }
       case "(": {
         // Get function name
-        const functionName = lastToken!.value!;
+        const functionName = lastStackItem!.value!;
         const start = tokenStack.at(-2)?.start!;
         const end = token.end;
         const funcExpr = new FuncExpr(start, end, functionName);
@@ -141,8 +141,11 @@ export function parser(input: string) {
         } else {
           // End argument
           // End function, clear args stack
-          astStack.pop();
+          const argAst = astStack.pop()!;
           ast = astStack.at(-1)!;
+
+          // Add argument to function
+          funcStack.at(-1)?.children?.push(argAst);
         }
         break;
       }
@@ -165,8 +168,8 @@ export function parser(input: string) {
           (token) => token.type === "["
         );
 
-        if (lastToken?.type === "name") {
-          const varName = lastToken.value!;
+        if (lastStackItem?.type === "name") {
+          const varName = lastStackItem.value!;
           const start = tokenStack.at(startTokenIndex)!.start;
           const end = token.end;
           const varExpr = new VarExpr(start, end, varName);

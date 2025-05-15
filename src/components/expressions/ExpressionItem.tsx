@@ -31,7 +31,7 @@ export function ExpressionItem({
             border: "1px solid #ccc",
           }}
         >
-          {input.slice(item.start, item.end + 1)}
+          {item.name ?? item.value} 
         </code>{" "}
         {item.start}, {item.end}
       </div>
