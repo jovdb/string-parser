@@ -1,6 +1,5 @@
 "use client";
 import { IExprItem } from "../../expressions/BaseExpr";
-import { Expression } from "../../expressions/Expression";
 import { ExpressionItem } from "./ExpressionItem";
 
 export function ExpressionTree({
@@ -9,19 +8,19 @@ export function ExpressionTree({
   onHover,
 }: {
   input: string;
-  expression: Expression | undefined;
+  expression: IExprItem<string>[] | undefined;
   onHover?: (item: IExprItem | undefined) => void;
 }) {
   if (!expression) return null;
   return (
-    <div className="expression-tree">
-      {expression.ast.map((item) => (
+    <div className="expression-tree" style={{ margin: 10}}>
+      {expression?.map((item) => (
         <ExpressionItem
           key={`${item.start}-${item.end}`}
           item={item}
           input={input}
           onHover={(isEnter) => {
-            onHover?.(isEnter ? item : undefined);
+            onHover?.(item);
           }}
         />
       ))}

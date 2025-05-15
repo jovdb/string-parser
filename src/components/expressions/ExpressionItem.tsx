@@ -1,5 +1,6 @@
 "use client";
 import { IExprItem } from "../../expressions/BaseExpr";
+import { ExpressionTree } from "./ExpressionTree";
 
 export function ExpressionItem({
   input,
@@ -8,31 +9,43 @@ export function ExpressionItem({
 }: {
   input: string;
   item: IExprItem;
-  onHover?: (isEnter: boolean) => void;
+  onHover?: (item: IExprItem | undefined) => void;
 }) {
   return (
-    <div
-      style={{ padding: "0.5em 0", cursor: "pointer" }}
-      onPointerEnter={() => {
-        onHover?.(true);
-      }}
-      onPointerLeave={() => {
-        onHover?.(false);
-      }}
-    >
-      {item.type}:{" "}
-      <code
-        style={{
-          whiteSpace: "pre",
-          background: "#eee",
-          padding: "0.2rem",
-          borderRadius: "2px",
-          border: "1px solid #ccc",
+    <div style={{ padding: "0.5em 0", cursor: "pointer" }}>
+      <div
+        onPointerEnter={() => {
+          onHover?.(item);
+        }}
+        onPointerLeave={() => {
+          onHover?.(undefined);
         }}
       >
-        {input.slice(item.start, item.end + 1)}
-      </code>{" "}
-      ({item.start}, {item.end})
+        {item.type}:{" "}
+        <code
+          style={{
+            whiteSpace: "pre",
+            background: "#eee",
+            padding: "0.2rem",
+            borderRadius: "2px",
+            border: "1px solid #ccc",
+          }}
+        >
+          {input.slice(item.start, item.end + 1)}
+        </code>{" "}
+        {item.start}, {item.end}
+      </div>
+      {item.children?.map((child, index) => (
+        <div style={{ marginLeft: "1em" }}>
+          {index}:{" "}
+          <ExpressionTree
+            key={`${item.start}-${item.end}`}
+            expression={child}
+            input={input}
+            onHover={(item) => onHover?.(item)}
+          />
+        </div>
+      )) ?? null}
     </div>
   );
 }

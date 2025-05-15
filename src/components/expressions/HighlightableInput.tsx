@@ -88,7 +88,7 @@ export function HighlightableInput({
   value,
   onChange,
   highlightRegion,
-  highlightColor = "rgba(255, 229, 100, 0.5)", // Default: semi-transparent light yellow
+  highlightColor = "rgba(255, 150, 0, 0.5)", // Default: semi-transparent light yellow
   style,
   spellCheck = "false",
 }: HighlightableInputProps) {
@@ -113,7 +113,7 @@ export function HighlightableInput({
     );
     const after = escapeHtml(currentVal.substring(highlightRegion.end + 1));
 
-    return `${before}<span style="background-color: ${highlightColor};">${highlighted}</span>${after}`;
+    return `${before}<span style="background-color: ${highlightColor}; display: inline-block;">${highlighted}</span>${after}`;
   }, [value, highlightRegion, highlightColor]);
 
   useEffect(() => {

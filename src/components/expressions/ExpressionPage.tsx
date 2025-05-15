@@ -25,7 +25,7 @@ function useExpression() {
     setValue(newValue: string) {
       setExpression((prev) => ({
         value: newValue,
-        tokens: [...lexer(newValue)],
+        tokens: [...lexer(newValue, undefined)],
         expression: new Expression(newValue),
       }));
     },
@@ -69,14 +69,11 @@ export function ExpressionPage({
           setValue(newValue);
         }}
         spellCheck="false"
-        style={{ fontFamily: "monospace", width: "100%" }}
-        highlightRegion={
-          item && expression?.value?.includes(item.value)
-            ? { start: item.start, end: item.end }
-            : undefined
-        }
+        style={{ fontFamily: "monospace", width: "100%", lineHeight: "1.5em" }}
+        highlightRegion={item}
         // highlightColor="lightblue" // You can customize the color if needed
       />
+
       <textarea
         style={{
           fontFamily: "monospace",
@@ -103,7 +100,7 @@ export function ExpressionPage({
       <h2>Expression Tree</h2>
       <ExpressionTree
         input={value}
-        expression={expression}
+        expression={expression.ast}
         onHover={(hoveredItem) => {
           setItem(hoveredItem);
         }}

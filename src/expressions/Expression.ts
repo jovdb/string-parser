@@ -5,14 +5,22 @@ import { FuncExpr } from "./FuncExpr";
 import { IToken, lexer } from "./Lexer";
 import { VarExpr } from "./VarExpr";
 
+type ErrorCodes =
+  | "UNSUPPORTED"
+  | "INVALID_BLOCK"
+  | "UNTERMINATED_BLOCK"
+  | "INVALID_BLOCK_NAME_CHAR"
+  | "NO_CHARS_AFTER_FUNCTION"
+  | "NO_CHARS_BETWEEN_ARGUMENTS";
+
 export interface ISyntaxError {
+  code: ErrorCodes;
   message: string;
   start: number;
   end: number;
 }
-type ErrorCodes = "UNSUPPORTED" | "INVALID_BLOCK" | "UNTERMINATED_BLOCK";
 
-function createError({
+export function createError({
   code,
   start,
   end,
@@ -37,6 +45,18 @@ function createError({
       errorMessage = `Unsupported: '${value}'`;
       break;
     }
+    case "INVALID_BLOCK_NAME_CHAR": {
+      errorMessage = `Invalid character in block name: '${value}', allowed: [a-zA-Z0-9-_]`;
+      break;
+    }
+    case "NO_CHARS_AFTER_FUNCTION": {
+      errorMessage = `Expected ']' after a function`;
+      break;
+    }
+    case "NO_CHARS_BETWEEN_ARGUMENTS": {
+      errorMessage = `No extra characters allowed between function arguments`;
+      break;
+    }
     default: {
       errorMessage = `Unknown error code: '${code}'`;
       break;
@@ -52,43 +72,92 @@ function createError({
 }
 
 export function parser(input: string) {
-  const stack: IToken[] = [];
-  const ast: BaseExpr<string>[] = [];
+  const tokenStack: IToken[] = [];
+  const funcStack: FuncExpr[] = [];
+
+  const root: BaseExpr<string>[] = [];
+
+  /* Where to add, root, nested function arguments */
+  let astStack: BaseExpr<string>[][] = [root];
+
   let error: ISyntaxError | undefined;
 
-  const tokens = [...lexer(input)];
-  console.log("Tokens:", tokens);
+  const tokens = [
+    ...lexer(input, (err) => {
+      if (!error) {
+        error = err;
+      }
+    }),
+  ];
+
+  function getLastBlockInfo() {
+    const blockStartIndex = tokenStack.findLastIndex(
+      (token) => token.type === "["
+    );
+    const blockTokens =
+      blockStartIndex >= 0 ? tokenStack.slice(blockStartIndex) : [];
+    return {
+      blockTokens,
+      blockString: blockTokens.map((token) => token.type).join(""),
+    };
+  }
 
   for (const token of tokens) {
     if (error) break;
+
+    /** Current ast level */
+    let ast = astStack.at(-1)!;
 
     // Constant
     if (token.type === "constant") {
       const value = input.slice(token.start, token.end + 1);
       ast.push(new ConstExpr(token.start, token.end, value));
+    } else if (token.type === "(") {
+      tokenStack.push(token);
+      const { blockString, blockTokens } = getLastBlockInfo();
+      if (blockString === "[name(") {
+        const name = input.slice(
+          blockTokens[1]!.start,
+          blockTokens[1]!.end + 1
+        );
+
+        /** Store function, so we can add arguments to it */
+        const funcExpr = new FuncExpr(blockTokens[0]!.start, token.end, name);
+        // Create a new ast level for the function arguments
+        ast = [];
+        astStack.push(ast);
+
+        funcStack.push(funcExpr);
+      }
+    } else if (token.type === ")") {
+      tokenStack.push(token);
+      // Function end, add last argument
+      const funcExpr = funcStack.at(-1)!;
+      if (funcExpr && ast.length) {
+        funcExpr.children.push(ast);
+      }
+      astStack.pop();
+      ast = astStack.at(-1)!;
     } else if (token.type === "]") {
       // Validate the parts
-      const blockStartIndex = stack.findLastIndex(
-        (token) => token.type === "["
-      );
-      const blockTokens = stack.slice(blockStartIndex);
-      const format =
-        blockTokens.map((token) => token.type).join("") + token.type;
-
-      if (format === "[name]") {
+      tokenStack.push(token);
+      const { blockString, blockTokens } = getLastBlockInfo();
+      if (blockString === "[name]") {
         // Variable
         const name = input.slice(
           blockTokens[1]!.start,
           blockTokens[1]!.end + 1
         );
-        ast.push(new VarExpr(blockTokens[0]!.start, token.end, name));
-      } else if (format === "[name()]") {
+        const varExpr = new VarExpr(blockTokens[0]!.start, token.end, name);
+
+        ast.push(varExpr);
+      } else if (blockString === "[name()]") {
         // Function
-        const name = input.slice(
-          blockTokens[1]!.start,
-          blockTokens[1]!.end + 1
-        );
-        ast.push(new FuncExpr(blockTokens[0]!.start, token.end, name));
+        const funcExpr = funcStack.pop();
+        if (funcExpr) {
+          funcExpr.end = token.end;
+          ast.push(funcExpr);
+        }
       } else {
         // Invalid block
         error ??= createError({
@@ -100,17 +169,17 @@ export function parser(input: string) {
         /*const start = blockTokens[0]!.start;
         const end = token.end;
         const value = input.slice(start, end + 1);
-        ast.push(new ConstExpr(start, end, value));
+        workingTree.push(new ConstExpr(start, end, value));
         */
       }
-      stack.splice(-blockTokens.length, blockTokens.length);
+      tokenStack.splice(-blockTokens.length, blockTokens.length);
     } else {
-      stack.push(token);
+      tokenStack.push(token);
     }
   }
 
   // Check for unterminated blocks
-  const lastBlockToken = stack.findLast(
+  const lastBlockToken = tokenStack.findLast(
     (token) => token.type === "[" || token.type === "("
   )!;
   if (lastBlockToken) {
@@ -123,19 +192,19 @@ export function parser(input: string) {
   }
 
   // Stack expected to be empty
-  if (stack.length > 0) {
+  if (tokenStack.length > 0) {
     error ??= {
-      message: `Parser error: Unexpected stack content: '${stack
+      message: `Parser error: Unexpected stack content: '${tokenStack
         .map((t) => t.type)
         .join(",")}'`,
-      start: stack.at(0)!.start,
-      end: stack.at(-1)!.end,
+      start: tokenStack.at(0)!.start,
+      end: tokenStack.at(-1)!.end,
     };
   }
 
   return {
     error,
-    ast,
+    ast: root,
   };
 }
 

@@ -12,7 +12,7 @@ describe("lexer", () => {
   ][];
 
   test.for(expressions.slice(0, 99))("input: '%s'", ([expr, expected]) => {
-    const tokens = lexer(expr);
+    const tokens = lexer(expr, undefined);
     console.log(expr, [...tokens]);
   });
 });
