@@ -112,73 +112,73 @@ export function parser(input: string) {
     /** Current ast level */
     let ast = astStack.at(-1)!;
 
+    const lastToken = tokenStack.at(-1);
+
     // Constant
-    if (token.type === "constant") {
-      const value = input.slice(token.start, token.end + 1);
-      ast.push(new ConstExpr(token.start, token.end, value));
-    } else if (token.type === "(") {
-      tokenStack.push(token);
-      const { blockString, blockTokens } = getLastBlockInfo();
-      if (blockString === "[name(") {
-        const name = input.slice(
-          blockTokens[1]!.start,
-          blockTokens[1]!.end + 1
-        );
-
-        /** Store function, so we can add arguments to it */
-        const funcExpr = new FuncExpr(blockTokens[0]!.start, token.end, name);
-        // Create a new ast level for the function arguments
-        ast = [];
-        astStack.push(ast);
-
-        funcStack.push(funcExpr);
+    switch (token.type) {
+      case "constant": {
+        ast.push(new ConstExpr(token.start, token.end, token.value!));
+        break;
       }
-    } else if (token.type === ")") {
-      tokenStack.push(token);
-      // Function end, add last argument
-      const funcExpr = funcStack.at(-1)!;
-      if (funcExpr && ast.length) {
-        funcExpr.children.push(ast);
-      }
-      astStack.pop();
-      ast = astStack.at(-1)!;
-    } else if (token.type === "]") {
-      // Validate the parts
-      tokenStack.push(token);
-      const { blockString, blockTokens } = getLastBlockInfo();
-      if (blockString === "[name]") {
-        // Variable
-        const name = input.slice(
-          blockTokens[1]!.start,
-          blockTokens[1]!.end + 1
-        );
-        const varExpr = new VarExpr(blockTokens[0]!.start, token.end, name);
-
-        ast.push(varExpr);
-      } else if (blockString === "[name()]") {
-        // Function
-        const funcExpr = funcStack.pop();
-        if (funcExpr) {
-          funcExpr.end = token.end;
-          ast.push(funcExpr);
-        }
-      } else {
-        // Invalid block
-        error ??= createError({
-          code: "INVALID_BLOCK",
-          start: blockTokens[0]!.start + 1,
-          end: token.end - 1,
-        });
-        // Add as constant to the AST
-        /*const start = blockTokens[0]!.start;
+      case "(": {
+        // Get function name
+        const functionName = lastToken!.value!;
+        const start = tokenStack.at(-2)?.start!;
         const end = token.end;
-        const value = input.slice(start, end + 1);
-        workingTree.push(new ConstExpr(start, end, value));
-        */
+        const funcExpr = new FuncExpr(start, end, functionName);
+
+        tokenStack.push(token);
+        funcStack.push(funcExpr);
+        break;
       }
-      tokenStack.splice(-blockTokens.length, blockTokens.length);
-    } else {
-      tokenStack.push(token);
+
+      case '"': {
+        if (token.requiresClosing) {
+          // Start argument
+          // Create a new ast level for the function arguments
+          ast = [];
+          astStack.push(ast);
+        } else {
+          // End argument
+          // End function, clear args stack
+          astStack.pop();
+          ast = astStack.at(-1)!;
+        }
+        break;
+      }
+      case ")": {
+        tokenStack.push(token);
+
+        // Function end, add last argument
+        const funcExpr = funcStack.at(-1)!;
+        funcExpr.end = token.end + 1;
+        ast.push(funcExpr);
+
+        // Do in "
+        // if (ast.length) {
+        //   funcExpr.children!.push(ast);
+        // }
+      }
+
+      case "]": {
+        const startTokenIndex = tokenStack.findLastIndex(
+          (token) => token.type === "["
+        );
+
+        if (lastToken?.type === "name") {
+          const varName = lastToken.value!;
+          const start = tokenStack.at(startTokenIndex)!.start;
+          const end = token.end;
+          const varExpr = new VarExpr(start, end, varName);
+          ast.push(varExpr);
+        }
+
+        tokenStack.splice(startTokenIndex, tokenStack.length - startTokenIndex);
+        break;
+      }
+      default: {
+        tokenStack.push(token);
+      }
     }
   }
 
@@ -198,6 +198,7 @@ export function parser(input: string) {
   */
 
   // Stack expected to be empty
+  /*
   if (tokenStack.length > 0) {
     error ??= {
       message: `Parser error: Unexpected stack content: '${tokenStack
@@ -207,6 +208,7 @@ export function parser(input: string) {
       end: tokenStack.at(-1)!.end,
     };
   }
+    */
 
   return {
     error,
