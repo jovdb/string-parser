@@ -13,7 +13,10 @@ export function ExpressionTree({
 }) {
   if (!expression) return null;
   return (
-    <div className="expression-tree" style={{ margin: 10}}>
+    <div
+      className="expression-tree"
+      style={{ margin: 10, display: "inline-block" }}
+    >
       {expression?.map((item) => (
         <ExpressionItem
           key={`${item.start}-${item.end}`}

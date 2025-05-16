@@ -83,7 +83,7 @@ export function ExpressionPage({
         }}
         readOnly
         disabled
-        value={expression?.toConsoleError() ?? ""}
+        value={expression?.toEditorError() ?? ""}
         spellCheck="false"
         tabIndex={-1}
       ></textarea>

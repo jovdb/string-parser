@@ -62,6 +62,7 @@ export function* lexer(
   let tokenStack: IToken[] = [];
   let index = -1;
   let lastTokenEndIndex = -1;
+  let argCount = 0;
 
   function getTextType() {
     if (tokenStack.length === 0) {
@@ -126,6 +127,15 @@ export function* lexer(
       if (lastStackItem?.type === "[") {
         // Before (
         const beforeToken = getBeforeToken();
+        if (!beforeToken) {
+          onError?.(
+            createError({
+              code: "MISSING_FUNCTION_NAME",
+              start: index,
+              end: index,
+            })
+          );
+        }
         if (beforeToken) {
           yield beforeToken;
         }
@@ -136,24 +146,12 @@ export function* lexer(
         });
         tokenStack.push(token);
         lastTokenEndIndex = index;
+        argCount = 0;
         yield token;
         continue;
       }
     } else if (char === "]") {
       if (lastStackItem?.type === "[") {
-        // Empty
-        if (lastStackItem.end === index - 1) {
-          onError?.(
-            createError({
-              code: "EMPTY_BLOCK",
-              start: lastStackItem.start,
-              end: index,
-            })
-          );
-          tokenStack.pop(); // Remove [
-          continue;
-        }
-
         // Before [
         const beforeToken = getBeforeToken();
         if (beforeToken) {
@@ -165,6 +163,18 @@ export function* lexer(
         tokenStack.pop(); // Remove [
         lastTokenEndIndex = index;
         yield token;
+
+        // Empty
+        if (lastStackItem.end === index - 1) {
+          onError?.(
+            createError({
+              code: "EMPTY_BLOCK",
+              start: lastStackItem.start,
+              end: index,
+            })
+          );
+          tokenStack.pop(); // Remove [
+        }
         continue;
       }
     } else if (char === ")") {
@@ -183,7 +193,15 @@ export function* lexer(
         continue;
       }
     } else if (char === '"') {
-      if (lastStackItem?.type === "(") {
+      if (lastStackItem?.type === "(" || lastStackItem?.type === ",") {
+        if (argCount > 0) {
+          // Before " argument separator
+          const beforeToken = getBeforeToken();
+          if (beforeToken) {
+            yield beforeToken;
+          }
+        }
+
         // onError?.(
         //   createError({
         //     code: "ARGUMENT_SEPARATOR_REQUIRED",
@@ -198,6 +216,7 @@ export function* lexer(
         tokenStack.push(token);
         lastTokenEndIndex = index;
         yield token;
+        argCount = 0;
         continue;
       } else if (lastStackItem?.type === '"') {
         // Before closing "
@@ -213,6 +232,8 @@ export function* lexer(
 
         yield token;
         continue;
+      } else {
+        debugger;
       }
     } else if (char === ",") {
       if (lastStackItem?.type === "(") {
@@ -232,10 +253,11 @@ export function* lexer(
 
     if (lastStackItem?.type === "[") {
       // If we are building a block name
-      if (!RegExp("[a-zA-Z0-9-_]").test(char)) {
+      const regEx = buffer.length === 1 ? "^[a-zA-Z]" : "^[a-zA-Z0-9-_*]$";
+      if (!RegExp(regEx).test(char)) {
         onError?.(
           createError({
-            code: "INVALID_BLOCK_NAME_CHAR",
+            code: "INVALID_BLOCK_NAME_FIRST_CHAR",
             start: index,
             end: index,
             value: char,
@@ -258,6 +280,7 @@ export function* lexer(
           code: "NO_CHARS_BETWEEN_ARGUMENTS",
           start: index,
           end: index,
+          value: char,
         })
       );
     }

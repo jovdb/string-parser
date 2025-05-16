@@ -8,10 +8,12 @@ type ErrorCodes =
   | "UNSUPPORTED"
   | "EMPTY_BLOCK"
   | "UNTERMINATED_BLOCK"
+  | "INVALID_BLOCK_NAME_FIRST_CHAR"
   | "INVALID_BLOCK_NAME_CHAR"
   | "NO_CHARS_AFTER_FUNCTION"
   | "NO_CHARS_BETWEEN_ARGUMENTS"
-  | "ARGUMENT_SEPARATOR_REQUIRED";
+  | "ARGUMENT_SEPARATOR_REQUIRED"
+  | "MISSING_FUNCTION_NAME";
 
 export interface ISyntaxError {
   code: ErrorCodes;
@@ -45,8 +47,12 @@ export function createError({
       errorMessage = `Unsupported: '${value}'`;
       break;
     }
+    case "INVALID_BLOCK_NAME_FIRST_CHAR": {
+      errorMessage = `Invalid first character for a block name: '${value}', Expected: a letter [a-Z]`;
+      break;
+    }
     case "INVALID_BLOCK_NAME_CHAR": {
-      errorMessage = `Invalid character in block name: '${value}', allowed: [a-zA-Z0-9-_]`;
+      errorMessage = `Invalid character in block name: '${value}', Expected: Alphanumeric, "_" or "-"`;
       break;
     }
     case "NO_CHARS_AFTER_FUNCTION": {
@@ -54,11 +60,15 @@ export function createError({
       break;
     }
     case "NO_CHARS_BETWEEN_ARGUMENTS": {
-      errorMessage = `No extra characters allowed between function arguments. Wrap function arguments between '"'"`;
+      errorMessage = `Invalid character in function arguments: '${value}'. Expected a '"' or ')' `;
       break;
     }
     case "ARGUMENT_SEPARATOR_REQUIRED": {
       errorMessage = `Argument separator required: ','`;
+      break;
+    }
+    case "MISSING_FUNCTION_NAME": {
+      errorMessage = `Function name is required`;
       break;
     }
     default: {
@@ -93,18 +103,6 @@ export function parser(input: string) {
       }
     }),
   ];
-
-  function getLastBlockInfo() {
-    const blockStartIndex = tokenStack.findLastIndex(
-      (token) => token.type === "["
-    );
-    const blockTokens =
-      blockStartIndex >= 0 ? tokenStack.slice(blockStartIndex) : [];
-    return {
-      blockTokens,
-      blockString: blockTokens.map((token) => token.type).join(""),
-    };
-  }
 
   for (const token of tokens) {
     if (error) break;
@@ -233,8 +231,40 @@ export class Expression extends BaseExpr<"expression"> {
     this.error = result.error;
   }
 
+  public walk(
+    /** Return true to stop walking */
+    callback: (item: BaseExpr<string>) => boolean | void | undefined,
+    method: "depth-first" | "breadth-first" = "depth-first",
+    expression = this.ast
+  ) {
+    expression.some((item) => {
+      if (method === "breadth-first") {
+        if (callback(item)) return true;
+      }
+      if (item.children) {
+        if (
+          item.children.some((child) => {
+            return this.walk(callback, method, child);
+          })
+        )
+          return true;
+      }
+      if (method === "depth-first") {
+        if (callback(item)) return true;
+      }
+    });
+  }
+
   public getAtIndex(charIndex: number) {
     const items: BaseExpr<string>[] = [];
+
+    this.walk((item) => {
+      if (charIndex >= item.start && charIndex <= item.end) {
+        items.push(item);
+      }
+    });
+
+    /*
     this.ast.some((expr) => {
       if (charIndex >= expr.start && charIndex <= expr.end) {
         items.push(expr);
@@ -244,10 +274,12 @@ export class Expression extends BaseExpr<"expression"> {
       }
       return false;
     });
+    */
     return items;
   }
 
-  public toConsoleError() {
+  /** Generate a error message that can be displayed below the expression */
+  public toEditorError() {
     const { error } = this;
     if (!error) return "";
 
