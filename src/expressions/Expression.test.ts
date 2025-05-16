@@ -1,29 +1,70 @@
 import { describe, expect, test } from "vitest";
-import { IExprItem } from "./BaseExpr";
-// import { SyntaxError, Expression } from "./expression";
-import tests from "../../private/expressions.json";
-import { parser } from "./Expression";
+import { expectations } from "./expressions.expectations";
+import { Expression, parser } from "./Expression";
 
 describe("expression", () => {
-  const expressions = tests as [
-    expression: string,
-    expected: {
-      items: IExprItem[];
-      error?: SyntaxError;
+  test.for(expectations.slice(1, 99))(
+    "Parsing '%s' should return error if invalid",
+    ([expr, expected]) => {
+      const { error } = new Expression(expr);
+
+      expect(
+        !!error,
+        expected.error
+          ? "Error expected"
+          : `No error expected but got: ${error?.message}`
+      ).toBe(!!expected.error);
     }
-  ][];
+  );
 
-  test.for(expressions.slice(1, 99))("parse '%s'", ([expr, expected]) => {
-    console.log("EXPRESSION:", `'${expr}'`);
-    const { ast, error } = parser(expr);
+  test.for(expectations.slice(1, 99))(
+    "Parsing '%s' should return correct error code",
+    ([expr, expected]) => {
+      const { error } = new Expression(expr);
 
-    const actual = {
-      items: ast,
-      error,
-    };
+      expect(error?.code).toBe(expected.error?.code);
+    }
+  );
 
-    // expect(actual).toEqual(expected);
+  test.for(expectations.slice(1, 99))(
+    "Parsing '%s' should return correct error location",
+    ([expr, expected]) => {
+      const { error } = new Expression(expr);
 
-    console.log("AST: ", ast, error);
+      expect(error?.start, "error.start").toBe(expected.error?.start);
+      expect(error?.end, "error.end").toBe(expected.error?.end);
+    }
+  );
+
+  test.for(expectations.slice(1, 99))(
+    "Parsing '%s' should return correct AST",
+    ([expr, expected]) => {
+      const { ast } = new Expression(expr);
+
+      expect(ast).toEqual(expected.ast);
+    }
+  );
+
+  /* Generate custom snapshot  */
+  /*
+  test.only("build  expectations", () => {
+    console.log(
+      JSON.stringify(
+        expectations.map(([expr]) => {
+          const { ast, error } = new Expression(expr);
+          return [
+            expr,
+            {
+              ast,
+              error,
+            },
+          ];
+        }),
+        null,
+        2
+      )
+    );
+    console.log("CODE THIS to the 'expressions.expectations.ts' file");
   });
+  */
 });

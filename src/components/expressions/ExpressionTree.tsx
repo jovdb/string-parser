@@ -15,14 +15,19 @@ export function ExpressionTree({
   return (
     <div
       className="expression-tree"
-      style={{ margin: 10, display: "inline-block" }}
+      style={{
+        display: "inline-block",
+        paddingLeft: "1em",
+        marginLeft: "0.25em",
+        borderLeft: "2px solid #aaa",
+      }}
     >
       {expression?.map((item) => (
         <ExpressionItem
           key={`${item.start}-${item.end}`}
           item={item}
           input={input}
-          onHover={(isEnter) => {
+          onHover={(item) => {
             onHover?.(item);
           }}
         />

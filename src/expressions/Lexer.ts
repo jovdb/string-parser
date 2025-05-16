@@ -64,6 +64,28 @@ export function* lexer(
   let lastTokenEndIndex = -1;
   let argCount = 0;
 
+  function validateBlockNameChar(
+    lastStackItem: IToken | undefined,
+    char: string
+  ) {
+    if (lastStackItem?.type === "[") {
+      // If we are building a block name
+      const regEx = buffer.length === 1 ? "^[a-zA-Z]" : "^[a-zA-Z0-9-_*]$";
+      if (!RegExp(regEx).test(char)) {
+        onError?.(
+          createError({
+            code: "INVALID_BLOCK_NAME_FIRST_CHAR",
+            start: index,
+            end: index,
+            value: char,
+          })
+        );
+        return false;
+      }
+    }
+    return true;
+  }
+
   function getTextType() {
     if (tokenStack.length === 0) {
       return "constant";
@@ -93,13 +115,15 @@ export function* lexer(
     index++;
     const lastStackItem = tokenStack.at(-1);
 
-    if (char === "\\") {
-      escapeNext = true;
-      continue;
-    } else if (escapeNext) {
+    if (escapeNext) {
       // Add to buffer, don't interpret as special char
       buffer += char;
+
+      validateBlockNameChar(lastStackItem, char);
       escapeNext = false;
+      continue;
+    } else if (char === "\\") {
+      escapeNext = true;
       continue;
     } else if (char === "[") {
       if (
@@ -195,20 +219,22 @@ export function* lexer(
     } else if (char === '"') {
       if (lastStackItem?.type === "(" || lastStackItem?.type === ",") {
         if (argCount > 0) {
-          // Before " argument separator
-          const beforeToken = getBeforeToken();
-          if (beforeToken) {
-            yield beforeToken;
+          if (lastStackItem?.type !== ",") {
+            onError?.(
+              createError({
+                code: "ARGUMENT_SEPARATOR_REQUIRED",
+                start: index,
+                end: index,
+                value: char,
+              })
+            );
           }
         }
 
-        // onError?.(
-        //   createError({
-        //     code: "ARGUMENT_SEPARATOR_REQUIRED",
-        //     start: index,
-        //     end: index,
-        //   })
-        // );
+        if (lastStackItem?.type === ",") {
+          tokenStack.pop(); // remove
+        }
+
         // Argument start
         const token = new Token(char, index, {
           requiresClosing: true,
@@ -216,7 +242,7 @@ export function* lexer(
         tokenStack.push(token);
         lastTokenEndIndex = index;
         yield token;
-        argCount = 0;
+
         continue;
       } else if (lastStackItem?.type === '"') {
         // Before closing "
@@ -229,11 +255,9 @@ export function* lexer(
         const token = new Token(char, index);
         tokenStack.pop();
         lastTokenEndIndex = index;
-
+        argCount += 1;
         yield token;
         continue;
-      } else {
-        debugger;
       }
     } else if (char === ",") {
       if (lastStackItem?.type === "(") {
@@ -250,8 +274,8 @@ export function* lexer(
     buffer += char;
 
     // Validate allowed input characters
-
-    if (lastStackItem?.type === "[") {
+    if (!validateBlockNameChar(lastStackItem, char)) {
+    } else if (lastStackItem?.type === "[") {
       // If we are building a block name
       const regEx = buffer.length === 1 ? "^[a-zA-Z]" : "^[a-zA-Z0-9-_*]$";
       if (!RegExp(regEx).test(char)) {
@@ -275,14 +299,38 @@ export function* lexer(
       );
     } else if (lastStackItem?.type === "(") {
       // No extra characters between function arguments
-      onError?.(
-        createError({
-          code: "NO_CHARS_BETWEEN_ARGUMENTS",
-          start: index,
-          end: index,
-          value: char,
-        })
-      );
+
+      if (argCount == 0) {
+        onError?.(
+          createError({
+            code: "NO_CHARS_BEFORE_FIRST_ARG",
+            start: index,
+            end: index,
+            value: char,
+          })
+        );
+      } else {
+        onError?.(
+          createError({
+            code: "NO_CHARS_AFTER_ARG",
+            start: index,
+            end: index,
+            value: char,
+          })
+        );
+      }
+    } else if (lastStackItem?.type === ",") {
+      // No extra characters between function arguments
+      if (char !== '"') {
+        onError?.(
+          createError({
+            code: "NO_CHARS_AFTER_ARG_SEPARATOR",
+            start: index,
+            end: index,
+            value: char,
+          })
+        );
+      }
     }
   }
 
@@ -291,6 +339,16 @@ export function* lexer(
       end: index,
       value: buffer,
     });
+  }
+
+  if (escapeNext) {
+    onError?.(
+      createError({
+        code: "UNTERMINATED_ESCAPE",
+        start: index,
+        end: index,
+      })
+    );
   }
 
   // Expected token stack to be empty

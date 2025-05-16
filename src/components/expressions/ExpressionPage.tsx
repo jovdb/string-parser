@@ -6,6 +6,7 @@ import { IExprItem } from "../../expressions/BaseExpr";
 import { HighlightableInput } from "./HighlightableInput";
 import { IToken, lexer, Token } from "../../expressions/Lexer";
 import { Tokens } from "./Tokens";
+import { expectations } from "../../expressions/expressions.expectations";
 
 function useExpression() {
   const [{ value, tokens, expression }, setExpression] = useState<{
@@ -32,11 +33,7 @@ function useExpression() {
   };
 }
 
-export function ExpressionPage({
-  expressions,
-}: {
-  expressions?: [string, { items: IExprItem[]; error?: SyntaxError }][];
-}) {
+export function ExpressionPage() {
   const { value, tokens, expression, setValue } = useExpression();
   const [item, setItem] = useState<IExprItem | undefined>(undefined);
 
@@ -46,20 +43,33 @@ export function ExpressionPage({
       <pre>[V]: variable [F()]: function</pre>
 
       <p>
+        Test Expressions:&nbsp;
         <select
           onChange={(e) => {
-            if (!expressions) return;
-            const selectedIndex = parseInt(e.target.value, 10);
-            const str = expressions?.[selectedIndex]![0];
+            if (!expectations) return;
+            const str = e.target.value;
             if (str === undefined) return;
             setValue(str);
           }}
         >
-          {expressions?.map(([expr], index) => (
-            <option key={index} value={index}>
-              {expr}
-            </option>
-          ))}
+          <optgroup label="Valid">
+            {expectations
+              ?.filter(([_, expectation]) => !expectation.error)
+              .map(([expr, expectation], index) => (
+                <option key={expr} value={expr}>
+                  {expr}
+                </option>
+              ))}
+          </optgroup>
+          <optgroup label="Invalid">
+            {expectations
+              ?.filter(([_, expectation]) => expectation.error)
+              .map(([expr, expectation], index) => (
+                <option key={expr} value={expr}>
+                  {expr}
+                </option>
+              ))}
+          </optgroup>
         </select>
       </p>
 

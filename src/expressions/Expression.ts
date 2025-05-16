@@ -11,9 +11,12 @@ type ErrorCodes =
   | "INVALID_BLOCK_NAME_FIRST_CHAR"
   | "INVALID_BLOCK_NAME_CHAR"
   | "NO_CHARS_AFTER_FUNCTION"
-  | "NO_CHARS_BETWEEN_ARGUMENTS"
+  | "NO_CHARS_BEFORE_FIRST_ARG"
+  | "NO_CHARS_AFTER_ARG"
+  | "NO_CHARS_AFTER_ARG_SEPARATOR"
   | "ARGUMENT_SEPARATOR_REQUIRED"
-  | "MISSING_FUNCTION_NAME";
+  | "MISSING_FUNCTION_NAME"
+  | "UNTERMINATED_ESCAPE";
 
 export interface ISyntaxError {
   code: ErrorCodes;
@@ -59,8 +62,16 @@ export function createError({
       errorMessage = `Expected ']' after a function`;
       break;
     }
-    case "NO_CHARS_BETWEEN_ARGUMENTS": {
-      errorMessage = `Invalid character in function arguments: '${value}'. Expected a '"' or ')' `;
+    case "NO_CHARS_BEFORE_FIRST_ARG": {
+      errorMessage = `Expected '"' or ')' `;
+      break;
+    }
+    case "NO_CHARS_AFTER_ARG": {
+      errorMessage = `Expected a ',' of ')' `;
+      break;
+    }
+    case "NO_CHARS_AFTER_ARG_SEPARATOR": {
+      errorMessage = `Expected '"'`;
       break;
     }
     case "ARGUMENT_SEPARATOR_REQUIRED": {
@@ -69,6 +80,10 @@ export function createError({
     }
     case "MISSING_FUNCTION_NAME": {
       errorMessage = `Function name is required`;
+      break;
+    }
+    case "UNTERMINATED_ESCAPE": {
+      errorMessage = `Unterminated escape sequence`;
       break;
     }
     default: {
@@ -151,14 +166,9 @@ export function parser(input: string) {
         tokenStack.push(token);
 
         // Function end, add last argument
-        const funcExpr = funcStack.at(-1)!;
+        const funcExpr = funcStack.pop()!;
         funcExpr.end = token.end + 1;
         ast.push(funcExpr);
-
-        // Do in "
-        // if (ast.length) {
-        //   funcExpr.children!.push(ast);
-        // }
       }
 
       case "]": {
@@ -182,34 +192,6 @@ export function parser(input: string) {
       }
     }
   }
-
-  /* Already done by lexer
-  // Check for unterminated blocks
-  const lastBlockToken = tokenStack.findLast(
-    (token) => token.type === "[" || token.type === "("
-  )!;
-  if (lastBlockToken) {
-    error ??= createError({
-      code: "UNTERMINATED_BLOCK",
-      start: lastBlockToken.start,
-      end: lastBlockToken.end,
-      value: lastBlockToken.type,
-    });
-  }
-  */
-
-  // Stack expected to be empty
-  /*
-  if (tokenStack.length > 0) {
-    error ??= {
-      message: `Parser error: Unexpected stack content: '${tokenStack
-        .map((t) => t.type)
-        .join(",")}'`,
-      start: tokenStack.at(0)!.start,
-      end: tokenStack.at(-1)!.end,
-    };
-  }
-    */
 
   return {
     error,
@@ -264,17 +246,6 @@ export class Expression extends BaseExpr<"expression"> {
       }
     });
 
-    /*
-    this.ast.some((expr) => {
-      if (charIndex >= expr.start && charIndex <= expr.end) {
-        items.push(expr);
-        // TODO: Children
-        // ...item.push(expr.children)
-        return true;
-      }
-      return false;
-    });
-    */
     return items;
   }
 

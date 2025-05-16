@@ -31,12 +31,18 @@ export function ExpressionItem({
             border: "1px solid #ccc",
           }}
         >
-          {item.name ?? item.value} 
+          {item.name ?? item.value}
         </code>{" "}
-        {item.start}, {item.end}
       </div>
       {item.children?.map((child, index) => (
-        <div style={{ marginLeft: "1em" }}>
+        <div
+          style={{
+            margin: "0.5em 0 0.5em 0",
+            display: "flex",
+            alignItems: "center",
+          }}
+          key={`${item.start}-${item.end}`}
+        >
           {index}:{" "}
           <ExpressionTree
             key={`${item.start}-${item.end}`}
