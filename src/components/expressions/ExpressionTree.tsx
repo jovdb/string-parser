@@ -5,10 +5,12 @@ import { ExpressionItem } from "./ExpressionItem";
 export function ExpressionTree({
   input,
   expression,
+  highLightItem,
   onHover,
 }: {
   input: string;
   expression: IExprItem<string>[] | undefined;
+  highLightItem?: IExprItem | undefined;
   onHover?: (item: IExprItem | undefined) => void;
 }) {
   if (!expression) return null;
@@ -26,6 +28,7 @@ export function ExpressionTree({
         <ExpressionItem
           key={`${item.start}-${item.end}`}
           item={item}
+          highLightItem={highLightItem}
           input={input}
           onHover={(item) => {
             onHover?.(item);

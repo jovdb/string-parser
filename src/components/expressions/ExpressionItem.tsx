@@ -5,14 +5,21 @@ import { ExpressionTree } from "./ExpressionTree";
 export function ExpressionItem({
   input,
   item,
+  highLightItem,
   onHover,
 }: {
   input: string;
   item: IExprItem;
+  highLightItem?: IExprItem | undefined;
   onHover?: (item: IExprItem | undefined) => void;
 }) {
   return (
-    <div style={{ padding: "0.5em 0", cursor: "pointer" }}>
+    <div
+      style={{
+        padding: "0.5em 0",
+        cursor: "pointer",
+      }}
+    >
       <div
         onPointerEnter={() => {
           onHover?.(item);
@@ -21,7 +28,20 @@ export function ExpressionItem({
           onHover?.(undefined);
         }}
       >
-        {item.type}:{" "}
+        <span
+          style={{
+            display: "inline-block",
+            marginRight: "1em",
+            padding: "0.2rem",
+            borderRadius: "2px",
+            border: `1px solid ${highLightItem === item ? "#ff9600" : "#ccc"}`,
+            color: highLightItem === item ? "#000" : "#888",
+            background:
+              highLightItem === item ? "rgba(255, 150, 0, 0.5)" : "transparent",
+          }}
+        >
+          {item.type}
+        </span>
         <code
           style={{
             whiteSpace: "pre",
@@ -48,6 +68,7 @@ export function ExpressionItem({
             key={`${item.start}-${item.end}`}
             expression={child}
             input={input}
+            highLightItem={highLightItem}
             onHover={(item) => onHover?.(item)}
           />
         </div>

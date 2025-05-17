@@ -4,16 +4,23 @@ import { IToken } from "../../expressions/Lexer";
 
 export function Token({
   input,
+  highlight,
   token,
   onHover,
 }: {
   input: string;
+  highlight?: boolean;
   token: IToken;
   onHover?: (isEnter: boolean) => void;
 }) {
   return (
     <span
-      style={{ padding: "0.5em 0", cursor: "pointer", display: "inline-block" }}
+      style={{
+        padding: "0.5em 0.2em",
+        cursor: "pointer",
+        display: "inline-block",
+        background: highlight ? "rgba(255, 150, 0, 0.5)" : "transparent",
+      }}
       onPointerEnter={() => {
         onHover?.(true);
       }}

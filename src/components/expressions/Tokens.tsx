@@ -5,10 +5,12 @@ import { Token } from "./Token";
 export function Tokens({
   tokens,
   input,
+  highlightIndex,
   onHover,
 }: {
   tokens: IToken[] | undefined;
   input: string;
+  highlightIndex?: number | undefined;
   onHover?: (token: IToken | undefined) => void;
 }) {
   if (!tokens) return null;
@@ -19,6 +21,12 @@ export function Tokens({
           input={input}
           key={`${token.start}-${token.end}`}
           token={token}
+          highlight={
+            highlightIndex !== undefined &&
+            highlightIndex >= 0 &&
+            highlightIndex >= token.start &&
+            highlightIndex <= token.end
+          }
           onHover={(isEnter) => {
             onHover?.(isEnter ? token : undefined);
           }}

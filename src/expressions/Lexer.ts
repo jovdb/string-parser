@@ -1,5 +1,6 @@
 // Split in parts
 
+import { b } from "vitest/dist/chunks/suite.d.FvehnV49.js";
 import { createError, ISyntaxError } from "./Expression";
 
 // Because tokens have no double meaning yet, I used the character as token name
@@ -71,10 +72,14 @@ export function* lexer(
     if (lastStackItem?.type === "[") {
       // If we are building a block name
       const regEx = buffer.length === 1 ? "^[a-zA-Z]" : "^[a-zA-Z0-9-_*]$";
+      const code =
+        buffer.length === 1
+          ? "INVALID_BLOCK_NAME_FIRST_CHAR"
+          : "INVALID_BLOCK_NAME_CHAR";
       if (!RegExp(regEx).test(char)) {
         onError?.(
           createError({
-            code: "INVALID_BLOCK_NAME_FIRST_CHAR",
+            code,
             start: index,
             end: index,
             value: char,
@@ -278,10 +283,15 @@ export function* lexer(
     } else if (lastStackItem?.type === "[") {
       // If we are building a block name
       const regEx = buffer.length === 1 ? "^[a-zA-Z]" : "^[a-zA-Z0-9-_*]$";
+      const code =
+        buffer.length === 1
+          ? "INVALID_BLOCK_NAME_FIRST_CHAR"
+          : "INVALID_BLOCK_NAME_CHAR";
+
       if (!RegExp(regEx).test(char)) {
         onError?.(
           createError({
-            code: "INVALID_BLOCK_NAME_FIRST_CHAR",
+            code,
             start: index,
             end: index,
             value: char,

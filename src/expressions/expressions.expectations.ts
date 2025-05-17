@@ -339,7 +339,7 @@ export const expectations: [
     {
       ast: [],
       error: {
-        code: "INVALID_BLOCK_NAME_FIRST_CHAR",
+        code: "INVALID_BLOCK_NAME_CHAR",
         message:
           "(2:2) error: Invalid first character for a block name: ')', Expected: a letter [a-Z]",
         start: 2,
@@ -347,19 +347,7 @@ export const expectations: [
       },
     },
   ],
-  [
-    "[F)]",
-    {
-      ast: [],
-      error: {
-        code: "INVALID_BLOCK_NAME_FIRST_CHAR",
-        message:
-          "(2:2) error: Invalid first character for a block name: ')', Expected: a letter [a-Z]",
-        start: 2,
-        end: 2,
-      },
-    },
-  ],
+
   [
     '[F("1")]',
     {

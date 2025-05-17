@@ -35,12 +35,19 @@ function useExpression() {
 
 export function ExpressionPage() {
   const { value, tokens, expression, setValue } = useExpression();
-  const [item, setItem] = useState<IExprItem | undefined>(undefined);
+  const [highLightInputItem, setHighlightedInputItem] = useState<
+    IExprItem | undefined
+  >(undefined);
+  const [highLightParseItem, setHighlightedExpressionItem] = useState<
+    IExprItem | undefined
+  >(undefined);
+  const [highLightTokenIndex, setHighlightedTokenIndex] = useState<
+    number | undefined
+  >(undefined);
 
   return (
     <>
       <h2>String Parsing</h2>
-      <pre>[V]: variable [F()]: function</pre>
 
       <p>
         Test Expressions:&nbsp;
@@ -78,9 +85,15 @@ export function ExpressionPage() {
         onChange={(newValue) => {
           setValue(newValue);
         }}
+        onHover={(index) => {
+          setHighlightedTokenIndex(index);
+          const hoveringItems = expression.getAtIndex(index);
+          const childItem = hoveringItems?.[0];
+          setHighlightedExpressionItem(childItem);
+        }}
         spellCheck="false"
         style={{ fontFamily: "monospace", width: "100%", lineHeight: "1.5em" }}
-        highlightRegion={item}
+        highlightRegion={highLightInputItem}
         // highlightColor="lightblue" // You can customize the color if needed
       />
 
@@ -102,17 +115,19 @@ export function ExpressionPage() {
       <Tokens
         tokens={tokens}
         input={value}
+        highlightIndex={highLightTokenIndex}
         onHover={(hoveredItem) => {
-          setItem(hoveredItem);
+          setHighlightedInputItem(hoveredItem);
         }}
       />
 
       <h2>Expression Tree</h2>
       <ExpressionTree
         input={value}
+        highLightItem={highLightParseItem}
         expression={expression.ast}
         onHover={(hoveredItem) => {
-          setItem(hoveredItem);
+          setHighlightedInputItem(hoveredItem);
         }}
       />
     </>

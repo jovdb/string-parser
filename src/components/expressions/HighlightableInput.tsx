@@ -3,6 +3,7 @@ import React, { CSSProperties, useRef, useEffect, useCallback } from "react";
 interface HighlightableInputProps {
   value: string;
   onChange: (newValue: string) => void;
+  onHover: (index: number) => void;
   highlightRegion?: { start: number; end: number } | undefined;
   highlightColor?: string;
   style?: CSSProperties;
@@ -87,6 +88,7 @@ const escapeHtml = (unsafe: string) =>
 export function HighlightableInput({
   value,
   onChange,
+  onHover,
   highlightRegion,
   highlightColor = "rgba(255, 150, 0, 0.5)", // Default: semi-transparent light yellow
   style,
@@ -146,6 +148,17 @@ export function HighlightableInput({
       contentEditable
       suppressContentEditableWarning={true}
       onInput={handleInput}
+      onPointerMove={(e) => {
+        const caretPosition = document.caretPositionFromPoint?.(
+          e.clientX,
+          e.clientY
+        );
+
+        onHover?.(caretPosition?.offset ?? -1);
+      }}
+      onPointerOut={() => {
+        onHover?.(-1);
+      }}
       style={{
         border: "1px solid #999",
         padding: "1px 3px",
