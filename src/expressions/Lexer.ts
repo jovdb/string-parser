@@ -1,7 +1,7 @@
 // Split in parts
 
 import { b } from "vitest/dist/chunks/suite.d.FvehnV49.js";
-import { createError, ISyntaxError } from "./Expression";
+import { createError, ISyntaxError } from "./errors";
 
 // Because tokens have no double meaning yet, I used the character as token name
 export type TokenType =
