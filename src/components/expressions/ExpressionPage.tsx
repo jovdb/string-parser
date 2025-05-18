@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Expression } from "../../expressions/Expression";
 import { ExpressionTree } from "./ExpressionTree";
-import { IExprItem } from "../../expressions/BaseExpr";
+import { IEvaluateContext, IExprItem } from "../../expressions/BaseExpr";
 import { HighlightableInput } from "./HighlightableInput";
 import { IToken, lexer, Token } from "../../expressions/Lexer";
 import { Tokens } from "./Tokens";
@@ -80,22 +80,42 @@ export function ExpressionPage() {
         </select>
       </p>
 
-      <HighlightableInput
-        value={value}
-        onChange={(newValue) => {
-          setValue(newValue);
-        }}
-        onHover={(index) => {
-          setHighlightedTokenIndex(index);
-          const hoveringItems = expression.getAtIndex(index);
-          const childItem = hoveringItems?.[0];
-          setHighlightedExpressionItem(childItem);
-        }}
-        spellCheck="false"
-        style={{ fontFamily: "monospace", width: "100%", lineHeight: "1.5em" }}
-        highlightRegion={highLightInputItem}
-        // highlightColor="lightblue" // You can customize the color if needed
-      />
+      <div style={{ display: "flex", gap: "0.5em" }}>
+        <HighlightableInput
+          value={value}
+          onChange={(newValue) => {
+            setValue(newValue);
+          }}
+          onHover={(index) => {
+            setHighlightedTokenIndex(index);
+            const hoveringItems = expression.getAtIndex(index);
+            const childItem = hoveringItems?.[0];
+            setHighlightedExpressionItem(childItem);
+          }}
+          spellCheck="false"
+          style={{
+            fontFamily: "monospace",
+            width: "100%",
+            lineHeight: "1.5em",
+          }}
+          highlightRegion={highLightInputItem}
+          // highlightColor="lightblue" // You can customize the color if needed
+        />
+        <button
+          onClick={async () => {
+            const context: IEvaluateContext = {
+              variables: {
+                A: () => "value of A",
+                B: async () => "value of B",
+              },
+            };
+            const value = await expression.evaluate(context, alert);
+            alert(value);
+          }}
+        >
+          Execute
+        </button>
+      </div>
 
       <textarea
         style={{

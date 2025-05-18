@@ -5,6 +5,17 @@ export interface IExprItem<TType extends string = string> {
   readonly children?: IExprItem<string>[][];
 }
 
+export interface IEvaluateError {
+  code: string;
+  message: string;
+}
+
+export type VariableList = Record<string, () => string | Promise<string>>;
+
+export interface IEvaluateContext {
+  variables: VariableList;
+}
+
 export abstract class BaseExpr<TType extends string>
   implements IExprItem<TType>
 {
@@ -19,5 +30,9 @@ export abstract class BaseExpr<TType extends string>
     this.end = end;
   }
 
-  abstract evaluate(): string;
+  /** Return undefined on error */
+  abstract evaluate(
+    context: IEvaluateContext,
+    onError?: (error: IEvaluateError) => void
+  ): Promise<string> | string | undefined;
 }

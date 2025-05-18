@@ -1,4 +1,10 @@
-import { BaseExpr, IExprItem } from "./BaseExpr";
+import { it } from "vitest";
+import {
+  BaseExpr,
+  IEvaluateContext,
+  IEvaluateError,
+  IExprItem,
+} from "./BaseExpr";
 import { ConstExpr } from "./ConstExpr";
 import { FuncExpr } from "./FuncExpr";
 import { IToken, lexer } from "./Lexer";
@@ -108,14 +114,16 @@ export class Expression extends BaseExpr<"expression"> {
   readonly ast: BaseExpr<string>[];
   readonly error?: ISyntaxError | undefined;
   readonly value: string;
+  readonly variables: VariableList;
 
-  constructor(value: string) {
+  constructor(value: string, variables: VariableList) {
     super("expression", 0, value.length);
 
     const result = parser(value);
     this.value = value;
     this.ast = result.error ? [] : result.ast;
     this.error = result.error;
+    this.variables = variables;
   }
 
   public walk(
@@ -169,7 +177,25 @@ export class Expression extends BaseExpr<"expression"> {
     ].join("\n");
   }
 
-  public evaluate() {
+  private evaluateLevel(items: BaseExpr<string>[]) {
+    const vars = items.filter((item) => item.type === "variable");
+
     return this.ast.map((item) => item.evaluate()).join("");
+  }
+
+  public evaluate(
+    context: IEvaluateContext,
+    onError?: (error: IEvaluateError) => void
+  ): Promise<string> | undefined {
+    // Execute
+    // Optimizations possible, like fetching all variables upfront
+    const promises = this.ast.map((item) => item.evaluate(context, onError));
+
+    // If one returns undefined, also return undefined
+    const hasErrors = promises.some((promise) => promise === undefined);
+    if (hasErrors) return undefined;
+
+    // Wait for all promises to resolve
+    return Promise.all(promises).then((values) => values.join(""));
   }
 }
