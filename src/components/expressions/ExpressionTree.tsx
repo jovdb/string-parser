@@ -4,16 +4,16 @@ import { ExpressionItem } from "./ExpressionItem";
 
 export function ExpressionTree({
   input,
-  expression,
+  items,
   highLightItem,
   onHover,
 }: {
   input: string;
-  expression: IExprItem<string>[] | undefined;
+  items: IExprItem<string>[] | undefined;
   highLightItem?: IExprItem | undefined;
   onHover?: (item: IExprItem | undefined) => void;
 }) {
-  if (!expression) return null;
+  if (!items) return null;
   return (
     <div
       className="expression-tree"
@@ -24,7 +24,7 @@ export function ExpressionTree({
         borderLeft: "2px solid #aaa",
       }}
     >
-      {expression?.map((item) => (
+      {items.map((item) => (
         <ExpressionItem
           key={`${item.start}-${item.end}`}
           item={item}

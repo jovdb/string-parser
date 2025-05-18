@@ -54,25 +54,15 @@ export function ExpressionItem({
           {item.name ?? item.value}
         </code>{" "}
       </div>
-      {item.children?.map((child, index) => (
-        <div
-          style={{
-            margin: "0.5em 0 0.5em 0",
-            display: "flex",
-            alignItems: "center",
-          }}
-          key={`${item.start}-${item.end}`}
-        >
-          {index}:{" "}
-          <ExpressionTree
-            key={`${item.start}-${item.end}`}
-            expression={child}
-            input={input}
-            highLightItem={highLightItem}
-            onHover={(item) => onHover?.(item)}
-          />
-        </div>
-      )) ?? null}
+
+      {item.children && item.children.length > 0 ? (
+        <ExpressionTree
+          items={item.children}
+          input={input}
+          highLightItem={highLightItem}
+          onHover={(item) => onHover?.(item)}
+        />
+      ) : null}
     </div>
   );
 }

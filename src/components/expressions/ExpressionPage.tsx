@@ -1,40 +1,40 @@
 "use client";
 import { useState } from "react";
-import { Expression } from "../../expressions/Expression";
 import { ExpressionTree } from "./ExpressionTree";
 import { IEvaluateContext, IExprItem } from "../../expressions/BaseExpr";
 import { HighlightableInput } from "./HighlightableInput";
 import { IToken, lexer, Token } from "../../expressions/Lexer";
 import { Tokens } from "./Tokens";
 import { expectations } from "../../expressions/expressions.expectations";
+import { Parser } from "../../expressions/Parser";
 
 function useExpression() {
-  const [{ value, tokens, expression }, setExpression] = useState<{
+  const [{ value, tokens, parser }, setExpression] = useState<{
     value: string;
     tokens: IToken[];
-    expression: Expression;
+    parser: Parser;
   }>(() => ({
     value: "",
     tokens: [],
-    expression: new Expression(""),
+    parser: new Parser(""),
   }));
 
   return {
     value,
     tokens,
-    expression,
+    parser,
     setValue(newValue: string) {
       setExpression((prev) => ({
         value: newValue,
         tokens: [...lexer(newValue, undefined)],
-        expression: new Expression(newValue),
+        parser: new Parser(newValue),
       }));
     },
   };
 }
 
 export function ExpressionPage() {
-  const { value, tokens, expression, setValue } = useExpression();
+  const { value, tokens, parser, setValue } = useExpression();
   const [highLightInputItem, setHighlightedInputItem] = useState<
     IExprItem | undefined
   >(undefined);
@@ -88,7 +88,7 @@ export function ExpressionPage() {
           }}
           onHover={(index) => {
             setHighlightedTokenIndex(index);
-            const hoveringItems = expression.getAtIndex(index);
+            const hoveringItems = parser.getAtIndex(index);
             const childItem = hoveringItems?.[0];
             setHighlightedExpressionItem(childItem);
           }}
@@ -109,7 +109,7 @@ export function ExpressionPage() {
                 B: async () => "value of B",
               },
             };
-            const value = await expression.evaluate(context, alert);
+            const value = await parser.expression.evaluate(context, alert);
             alert(value);
           }}
         >
@@ -126,7 +126,7 @@ export function ExpressionPage() {
         }}
         readOnly
         disabled
-        value={expression?.toEditorError() ?? ""}
+        value={parser?.toEditorError() ?? ""}
         spellCheck="false"
         tabIndex={-1}
       ></textarea>
@@ -145,7 +145,7 @@ export function ExpressionPage() {
       <ExpressionTree
         input={value}
         highLightItem={highLightParseItem}
-        expression={expression.ast}
+        items={parser.expression.children}
         onHover={(hoveredItem) => {
           setHighlightedInputItem(hoveredItem);
         }}

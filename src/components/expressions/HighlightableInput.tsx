@@ -55,7 +55,7 @@ const setCharOffset = (element: HTMLElement, targetOffset: number) => {
     } else if (node.nodeType === Node.ELEMENT_NODE) {
       const children = Array.from(node.childNodes);
       for (let i = children.length - 1; i >= 0; i--) {
-        nodeStack.push(children[i]);
+        nodeStack.push(children[i]!);
       }
     }
   }

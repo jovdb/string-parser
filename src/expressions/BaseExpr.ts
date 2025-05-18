@@ -1,8 +1,10 @@
+import { Expression } from "./Expression";
+
 export interface IExprItem<TType extends string = string> {
   readonly type: TType;
   readonly start: number;
   readonly end: number;
-  readonly children?: IExprItem<string>[][];
+  readonly children?: IExprItem<string>[];
 }
 
 export interface IEvaluateError {
@@ -22,7 +24,7 @@ export abstract class BaseExpr<TType extends string>
   type: TType;
   start: number;
   end: number;
-  children?: BaseExpr<string>[][];
+  children?: BaseExpr<string>[];
 
   constructor(type: TType, start: number, end: number) {
     this.type = type;

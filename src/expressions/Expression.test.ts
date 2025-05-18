@@ -1,12 +1,13 @@
 import { describe, expect, test } from "vitest";
 import { expectations } from "./expressions.expectations";
-import { Expression, parser } from "./Expression";
+import { Parser } from "./Parser";
+import { Expression } from "./Expression";
 
 describe("expression", () => {
   test.for(expectations.slice(1, 99))(
     "Parsing '%s' should return error if invalid",
     ([expr, expected]) => {
-      const { error } = new Expression(expr);
+      const { error } = new Parser(expr);
 
       expect(
         !!error,
@@ -20,7 +21,7 @@ describe("expression", () => {
   test.for(expectations.slice(1, 99))(
     "Parsing '%s' should return correct error code",
     ([expr, expected]) => {
-      const { error } = new Expression(expr);
+      const { error } = new Parser(expr);
 
       expect(error?.code).toBe(expected.error?.code);
     }
@@ -29,7 +30,7 @@ describe("expression", () => {
   test.for(expectations.slice(1, 99))(
     "Parsing '%s' should return correct error location",
     ([expr, expected]) => {
-      const { error } = new Expression(expr);
+      const { error } = new Parser(expr);
 
       expect(error?.start, "error.start").toBe(expected.error?.start);
       expect(error?.end, "error.end").toBe(expected.error?.end);
@@ -39,32 +40,32 @@ describe("expression", () => {
   test.for(expectations.slice(1, 99))(
     "Parsing '%s' should return correct AST",
     ([expr, expected]) => {
-      const { ast } = new Expression(expr);
+      const { expression } = new Parser(expr);
 
-      expect(ast).toEqual(expected.ast);
+      expect(expression).toEqual(expected.expression);
     }
   );
 
-  /* Generate custom snapshot  */
   /*
-  test.only("build  expectations", () => {
+   * Generate custom snapshot
+   * rename skip to only
+   */
+
+  test.skip("build  expectations", () => {
     console.log(
       JSON.stringify(
         expectations.map(([expr]) => {
-          const { ast, error } = new Expression(expr);
+          const { expression, error } = new Parser(expr);
           return [
             expr,
             {
-              ast,
+              expression,
               error,
             },
           ];
-        }),
-        null,
-        2
+        })
       )
     );
-    console.log("CODE THIS to the 'expressions.expectations.ts' file");
+    console.log("COPY THIS TO: 'expressions.expectations.ts'");
   });
-  */
 });
