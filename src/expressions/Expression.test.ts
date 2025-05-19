@@ -51,7 +51,7 @@ describe("expression", () => {
    * rename skip to only
    */
 
-  test.skip("build  expectations", () => {
+  test.only("build  expectations", () => {
     console.log(
       JSON.stringify(
         expectations.map(([expr]) => {

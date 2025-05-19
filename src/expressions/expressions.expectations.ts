@@ -367,10 +367,38 @@ const expectationsTemp: [
             children: [
               {
                 type: "expression",
-                start: 3,
-                end: 5,
+                start: 4,
+                end: 4,
                 children: [{ type: "constant", start: 4, end: 4, value: "1" }],
-                value: "1",
+                value: "",
+              },
+            ],
+            name: "F",
+          },
+        ],
+        value: '[F("1")]',
+      },
+    },
+  ],
+  [
+    '[F("1")]',
+    {
+      expression: {
+        type: "expression",
+        start: 0,
+        end: 8,
+        children: [
+          {
+            type: "func",
+            start: 0,
+            end: 7,
+            children: [
+              {
+                type: "expression",
+                start: 4,
+                end: 4,
+                children: [{ type: "constant", start: 4, end: 4, value: "1" }],
+                value: "",
               },
             ],
             name: "F",
@@ -521,17 +549,17 @@ const expectationsTemp: [
             children: [
               {
                 type: "expression",
-                start: 3,
-                end: 5,
+                start: 4,
+                end: 4,
                 children: [{ type: "constant", start: 4, end: 4, value: "1" }],
-                value: "1",
+                value: "",
               },
               {
                 type: "expression",
-                start: 7,
-                end: 9,
+                start: 8,
+                end: 8,
                 children: [{ type: "constant", start: 8, end: 8, value: "2" }],
-                value: "2",
+                value: "",
               },
             ],
             name: "F",
@@ -664,12 +692,12 @@ const expectationsTemp: [
             children: [
               {
                 type: "expression",
-                start: 4,
-                end: 11,
+                start: 5,
+                end: 10,
                 children: [
                   { type: "func", start: 5, end: 10, children: [], name: "F2" },
                 ],
-                value: "[F2()]",
+                value: "[F2()",
               },
             ],
             name: "F1",
@@ -694,25 +722,25 @@ const expectationsTemp: [
             children: [
               {
                 type: "expression",
-                start: 4,
-                end: 6,
+                start: 5,
+                end: 5,
                 children: [{ type: "constant", start: 5, end: 5, value: "1" }],
-                value: "1",
+                value: "",
               },
               {
                 type: "expression",
-                start: 8,
-                end: 16,
+                start: 9,
+                end: 15,
                 children: [
                   { type: "constant", start: 9, end: 12, value: "c:\\" },
                   { type: "variable", start: 13, end: 15, name: "A" },
                 ],
-                value: "c:\\\\[A]",
+                value: "c:\\\\[A",
               },
               {
                 type: "expression",
-                start: 18,
-                end: 36,
+                start: 19,
+                end: 35,
                 children: [
                   {
                     type: "func",
@@ -721,12 +749,12 @@ const expectationsTemp: [
                     children: [
                       {
                         type: "expression",
-                        start: 23,
-                        end: 27,
+                        start: 24,
+                        end: 26,
                         children: [
                           { type: "variable", start: 24, end: 26, name: "B" },
                         ],
-                        value: "[B]",
+                        value: "[B",
                       },
                     ],
                     name: "F2",
@@ -739,7 +767,7 @@ const expectationsTemp: [
                     name: "F3",
                   },
                 ],
-                value: '[F2("[B]")][F3()]',
+                value: '[F2("[B]")][F3()',
               },
             ],
             name: "F1",

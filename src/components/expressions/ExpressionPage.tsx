@@ -123,6 +123,8 @@ export function ExpressionPage() {
           width: "100%",
           border: "none",
           marginLeft: "0.15em",
+          background: "transparent",
+          color: "red",
         }}
         readOnly
         disabled

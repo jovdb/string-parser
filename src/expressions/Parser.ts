@@ -66,16 +66,16 @@ export function parser(input: string) {
           ast = astStack.at(-1)!;
 
           // Add argument to function
-          const argString = input.slice(
-            argAst[0]!.start,
-            argAst.at(-1)!.end + 1
-          );
+          const start = argAst.length ? argAst[0]!.start : token.start - 1;
+          const end = argAst.length ? token.start - 1 : token.start;
+
+          const argString = input.slice(start, end + 1);
           const expression = new Expression(argString);
-          expression.start = argAst[0]!.start - 1;
-          expression.end = argAst.at(-1)!.end + 1;
+
+          expression.start = start;
+          expression.end = end;
           expression.children!.push(...argAst);
           funcStack.at(-1)?.children?.push(expression);
-          debugger;
         }
         break;
       }
