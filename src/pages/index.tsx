@@ -1,11 +1,11 @@
-import { Link } from "waku";
+import { ExpressionPage } from "../components/expressions/ExpressionPage";
 
-export default async function HomePage() {
+export default async function Page() {
   return (
-    <div>
-      <title>Home</title>
-      <Link to="/expression">Expression</Link>
-    </div>
+    <>
+      <title>Expression</title>
+      <ExpressionPage />
+    </>
   );
 }
 
