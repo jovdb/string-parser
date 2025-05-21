@@ -160,14 +160,33 @@ const expectationsTemp: [
     },
   ],
   [
-    "[F]",
+    "[V]",
     {
       expression: {
         type: "expression",
         start: 0,
         end: 3,
-        children: [{ type: "variable", start: 0, end: 2, name: "F" }],
-        value: "[F]",
+        children: [{ type: "variable", start: 0, end: 2, name: "V" }],
+        value: "[V]",
+      },
+    },
+  ],
+  [
+    "[1]",
+    {
+      expression: {
+        type: "expression",
+        start: 0,
+        end: 0,
+        children: [],
+        value: "",
+      },
+      error: {
+        code: "INVALID_BLOCK_NAME_FIRST_CHAR",
+        message:
+          "(1:1) error: Invalid first character for a block name: '1', Expected: a letter [a-Z]",
+        start: 1,
+        end: 1,
       },
     },
   ],
@@ -203,78 +222,83 @@ const expectationsTemp: [
     },
   ],
   [
-    "[F][G]",
+    "[V1][V2]",
     {
       expression: {
         type: "expression",
         start: 0,
-        end: 6,
+        end: 8,
         children: [
-          { type: "variable", start: 0, end: 2, name: "F" },
-          { type: "variable", start: 3, end: 5, name: "G" },
+          { type: "variable", start: 0, end: 3, name: "V1" },
+          { type: "variable", start: 4, end: 7, name: "V2" },
         ],
-        value: "[F][G]",
+        value: "[V1][V2]",
       },
     },
   ],
   [
-    "[F()c]",
+    "[Date()]",
     {
       expression: {
         type: "expression",
         start: 0,
-        end: 6,
+        end: 8,
         children: [
-          { type: "func", start: 0, end: 4, children: [], name: "F" },
-          { type: "variable", start: 4, end: 5, name: "c" },
+          { type: "func", start: 0, end: 7, children: [], name: "Date" },
         ],
-        value: "[F()c]",
+        value: "[Date()]",
       },
     },
   ],
   [
-    "1[F]2[G]3",
+    "[Date()S]",
     {
       expression: {
         type: "expression",
         start: 0,
-        end: 9,
-        children: [
-          { type: "constant", start: 0, end: 0, value: "1" },
-          { type: "variable", start: 1, end: 3, name: "F" },
-          { type: "constant", start: 4, end: 4, value: "2" },
-          { type: "variable", start: 5, end: 7, name: "G" },
-          { type: "constant", start: 8, end: 8, value: "3" },
-        ],
-        value: "1[F]2[G]3",
+        end: 0,
+        children: [],
+        value: "",
       },
-    },
-  ],
-  [
-    "[F()]",
-    {
-      expression: {
-        type: "expression",
-        start: 0,
-        end: 5,
-        children: [{ type: "func", start: 0, end: 4, children: [], name: "F" }],
-        value: "[F()]",
-      },
-    },
-  ],
-  [
-    "1[F()]2",
-    {
-      expression: {
-        type: "expression",
-        start: 0,
+      error: {
+        code: "NO_CHARS_AFTER_FUNCTION",
+        message: "(7:7) error: Expected ']' after a function",
+        start: 7,
         end: 7,
+      },
+    },
+  ],
+  [
+    "1[V1]2[V2]3",
+    {
+      expression: {
+        type: "expression",
+        start: 0,
+        end: 11,
         children: [
           { type: "constant", start: 0, end: 0, value: "1" },
-          { type: "func", start: 1, end: 5, children: [], name: "F" },
-          { type: "constant", start: 6, end: 6, value: "2" },
+          { type: "variable", start: 1, end: 4, name: "V1" },
+          { type: "constant", start: 5, end: 5, value: "2" },
+          { type: "variable", start: 6, end: 9, name: "V2" },
+          { type: "constant", start: 10, end: 10, value: "3" },
         ],
-        value: "1[F()]2",
+        value: "1[V1]2[V2]3",
+      },
+    },
+  ],
+  [
+    "1[Date()]2",
+    {
+      expression: {
+        type: "expression",
+        start: 0,
+        end: 10,
+        children: [
+          { type: "constant", start: 0, end: 0, value: "1" },
+          { type: "func", start: 1, end: 8, children: [], name: "Date" },
+          { type: "constant", start: 9, end: 9, value: "2" },
+        ],
+        value: "1[Date()]2",
       },
     },
   ],
@@ -316,7 +340,7 @@ const expectationsTemp: [
     },
   ],
   [
-    "[F(]",
+    "[Date(]",
     {
       expression: {
         type: "expression",
@@ -327,14 +351,14 @@ const expectationsTemp: [
       },
       error: {
         code: "NO_CHARS_BEFORE_FIRST_ARG",
-        message: "(3:3) error: Expected '\"' or ')' ",
-        start: 3,
-        end: 3,
+        message: "(6:6) error: Expected '\"' or ')' ",
+        start: 6,
+        end: 6,
       },
     },
   ],
   [
-    "[F)]",
+    "[Date)]",
     {
       expression: {
         type: "expression",
@@ -346,70 +370,42 @@ const expectationsTemp: [
       error: {
         code: "INVALID_BLOCK_NAME_CHAR",
         message:
-          '(2:2) error: Invalid character in block name: \')\', Expected: Alphanumeric, "_" or "-"',
-        start: 2,
-        end: 2,
+          '(5:5) error: Invalid character in block name: \')\', Expected: Alphanumeric, "_", "-" or "(" to start a function)',
+        start: 5,
+        end: 5,
       },
     },
   ],
   [
-    '[F("1")]',
+    '[Sum("1")]',
     {
       expression: {
         type: "expression",
         start: 0,
-        end: 8,
+        end: 10,
         children: [
           {
             type: "func",
             start: 0,
-            end: 7,
+            end: 9,
             children: [
               {
                 type: "expression",
-                start: 4,
-                end: 4,
-                children: [{ type: "constant", start: 4, end: 4, value: "1" }],
-                value: "",
+                start: 6,
+                end: 6,
+                children: [{ type: "constant", start: 6, end: 6, value: "1" }],
+                value: "1",
               },
             ],
-            name: "F",
+            name: "Sum",
           },
         ],
-        value: '[F("1")]',
+        value: '[Sum("1")]',
       },
     },
   ],
   [
-    '[F("1")]',
-    {
-      expression: {
-        type: "expression",
-        start: 0,
-        end: 8,
-        children: [
-          {
-            type: "func",
-            start: 0,
-            end: 7,
-            children: [
-              {
-                type: "expression",
-                start: 4,
-                end: 4,
-                children: [{ type: "constant", start: 4, end: 4, value: "1" }],
-                value: "",
-              },
-            ],
-            name: "F",
-          },
-        ],
-        value: '[F("1")]',
-      },
-    },
-  ],
-  [
-    "[F(a)]",
+    "[Sum(a)]",
     {
       expression: {
         type: "expression",
@@ -420,14 +416,14 @@ const expectationsTemp: [
       },
       error: {
         code: "NO_CHARS_BEFORE_FIRST_ARG",
-        message: "(3:3) error: Expected '\"' or ')' ",
-        start: 3,
-        end: 3,
+        message: "(5:5) error: Expected '\"' or ')' ",
+        start: 5,
+        end: 5,
       },
     },
   ],
   [
-    "[F(,)]",
+    "[Sum(,)]",
     {
       expression: {
         type: "expression",
@@ -438,14 +434,14 @@ const expectationsTemp: [
       },
       error: {
         code: "NO_CHARS_AFTER_ARG_SEPARATOR",
-        message: "(4:4) error: Expected '\"'",
-        start: 4,
-        end: 4,
+        message: "(6:6) error: Expected '\"'",
+        start: 6,
+        end: 6,
       },
     },
   ],
   [
-    "[F(()]",
+    "[Sum(()]",
     {
       expression: {
         type: "expression",
@@ -456,14 +452,14 @@ const expectationsTemp: [
       },
       error: {
         code: "NO_CHARS_BEFORE_FIRST_ARG",
-        message: "(3:3) error: Expected '\"' or ')' ",
-        start: 3,
-        end: 3,
+        message: "(5:5) error: Expected '\"' or ')' ",
+        start: 5,
+        end: 5,
       },
     },
   ],
   [
-    '[F( "1")]',
+    '[Sum( "1")]',
     {
       expression: {
         type: "expression",
@@ -474,14 +470,14 @@ const expectationsTemp: [
       },
       error: {
         code: "NO_CHARS_BEFORE_FIRST_ARG",
-        message: "(3:3) error: Expected '\"' or ')' ",
-        start: 3,
-        end: 3,
+        message: "(5:5) error: Expected '\"' or ')' ",
+        start: 5,
+        end: 5,
       },
     },
   ],
   [
-    '[F("1" )]',
+    '[Sum("1" )]',
     {
       expression: {
         type: "expression",
@@ -492,14 +488,14 @@ const expectationsTemp: [
       },
       error: {
         code: "NO_CHARS_AFTER_ARG",
-        message: "(6:6) error: Expected a ',' of ')' ",
-        start: 6,
-        end: 6,
+        message: "(8:8) error: Expected a ',' of ')' ",
+        start: 8,
+        end: 8,
       },
     },
   ],
   [
-    '[F("1"a)]',
+    '[Sum("1"a)]',
     {
       expression: {
         type: "expression",
@@ -510,14 +506,14 @@ const expectationsTemp: [
       },
       error: {
         code: "NO_CHARS_AFTER_ARG",
-        message: "(6:6) error: Expected a ',' of ')' ",
-        start: 6,
-        end: 6,
+        message: "(8:8) error: Expected a ',' of ')' ",
+        start: 8,
+        end: 8,
       },
     },
   ],
   [
-    '[F("1""2")]',
+    '[Sum("1""2")]',
     {
       expression: {
         type: "expression",
@@ -528,157 +524,14 @@ const expectationsTemp: [
       },
       error: {
         code: "ARGUMENT_SEPARATOR_REQUIRED",
-        message: "(6:6) error: Argument separator required: ','",
-        start: 6,
-        end: 6,
+        message: "(8:8) error: Argument separator required: ','",
+        start: 8,
+        end: 8,
       },
     },
   ],
   [
-    '[F("1","2")]',
-    {
-      expression: {
-        type: "expression",
-        start: 0,
-        end: 12,
-        children: [
-          {
-            type: "func",
-            start: 0,
-            end: 11,
-            children: [
-              {
-                type: "expression",
-                start: 4,
-                end: 4,
-                children: [{ type: "constant", start: 4, end: 4, value: "1" }],
-                value: "",
-              },
-              {
-                type: "expression",
-                start: 8,
-                end: 8,
-                children: [{ type: "constant", start: 8, end: 8, value: "2" }],
-                value: "",
-              },
-            ],
-            name: "F",
-          },
-        ],
-        value: '[F("1","2")]',
-      },
-    },
-  ],
-  [
-    '[F("1", "2")]',
-    {
-      expression: {
-        type: "expression",
-        start: 0,
-        end: 0,
-        children: [],
-        value: "",
-      },
-      error: {
-        code: "NO_CHARS_AFTER_ARG_SEPARATOR",
-        message: "(7:7) error: Expected '\"'",
-        start: 7,
-        end: 7,
-      },
-    },
-  ],
-  [
-    '[F("1",2)]',
-    {
-      expression: {
-        type: "expression",
-        start: 0,
-        end: 0,
-        children: [],
-        value: "",
-      },
-      error: {
-        code: "NO_CHARS_AFTER_ARG_SEPARATOR",
-        message: "(7:7) error: Expected '\"'",
-        start: 7,
-        end: 7,
-      },
-    },
-  ],
-  [
-    '[F("1",,)]',
-    {
-      expression: {
-        type: "expression",
-        start: 0,
-        end: 0,
-        children: [],
-        value: "",
-      },
-      error: {
-        code: "NO_CHARS_AFTER_ARG_SEPARATOR",
-        message: "(7:7) error: Expected '\"'",
-        start: 7,
-        end: 7,
-      },
-    },
-  ],
-  [
-    '[F("1",)]',
-    {
-      expression: {
-        type: "expression",
-        start: 0,
-        end: 0,
-        children: [],
-        value: "",
-      },
-      error: {
-        code: "NO_CHARS_AFTER_ARG_SEPARATOR",
-        message: "(7:7) error: Expected '\"'",
-        start: 7,
-        end: 7,
-      },
-    },
-  ],
-  [
-    '[F("1",[a])]',
-    {
-      expression: {
-        type: "expression",
-        start: 0,
-        end: 0,
-        children: [],
-        value: "",
-      },
-      error: {
-        code: "NO_CHARS_AFTER_ARG_SEPARATOR",
-        message: "(7:7) error: Expected '\"'",
-        start: 7,
-        end: 7,
-      },
-    },
-  ],
-  [
-    '[F("1",,"3")]',
-    {
-      expression: {
-        type: "expression",
-        start: 0,
-        end: 0,
-        children: [],
-        value: "",
-      },
-      error: {
-        code: "NO_CHARS_AFTER_ARG_SEPARATOR",
-        message: "(7:7) error: Expected '\"'",
-        start: 7,
-        end: 7,
-      },
-    },
-  ],
-  [
-    '[F1("[F2()]")]',
+    '[Sum("1","2")]',
     {
       expression: {
         type: "expression",
@@ -692,88 +545,268 @@ const expectationsTemp: [
             children: [
               {
                 type: "expression",
-                start: 5,
+                start: 6,
+                end: 6,
+                children: [{ type: "constant", start: 6, end: 6, value: "1" }],
+                value: "1",
+              },
+              {
+                type: "expression",
+                start: 10,
                 end: 10,
                 children: [
-                  { type: "func", start: 5, end: 10, children: [], name: "F2" },
+                  { type: "constant", start: 10, end: 10, value: "2" },
                 ],
-                value: "[F2()",
+                value: "2",
               },
             ],
-            name: "F1",
+            name: "Sum",
           },
         ],
-        value: '[F1("[F2()]")]',
+        value: '[Sum("1","2")]',
       },
     },
   ],
   [
-    '[F1("1","c:\\\\[A]","[F2("[B]")][F3()]")]',
+    '[Sum("1", "2")]',
     {
       expression: {
         type: "expression",
         start: 0,
-        end: 39,
+        end: 0,
+        children: [],
+        value: "",
+      },
+      error: {
+        code: "NO_CHARS_AFTER_ARG_SEPARATOR",
+        message: "(9:9) error: Expected '\"'",
+        start: 9,
+        end: 9,
+      },
+    },
+  ],
+  [
+    '[Sum("1",2)]',
+    {
+      expression: {
+        type: "expression",
+        start: 0,
+        end: 0,
+        children: [],
+        value: "",
+      },
+      error: {
+        code: "NO_CHARS_AFTER_ARG_SEPARATOR",
+        message: "(9:9) error: Expected '\"'",
+        start: 9,
+        end: 9,
+      },
+    },
+  ],
+  [
+    '[Sum("1",,)]',
+    {
+      expression: {
+        type: "expression",
+        start: 0,
+        end: 0,
+        children: [],
+        value: "",
+      },
+      error: {
+        code: "NO_CHARS_AFTER_ARG_SEPARATOR",
+        message: "(9:9) error: Expected '\"'",
+        start: 9,
+        end: 9,
+      },
+    },
+  ],
+  [
+    '[Sum("1",)]',
+    {
+      expression: {
+        type: "expression",
+        start: 0,
+        end: 0,
+        children: [],
+        value: "",
+      },
+      error: {
+        code: "NO_CHARS_AFTER_ARG_SEPARATOR",
+        message: "(9:9) error: Expected '\"'",
+        start: 9,
+        end: 9,
+      },
+    },
+  ],
+  [
+    '[Sum("1",[a])]',
+    {
+      expression: {
+        type: "expression",
+        start: 0,
+        end: 0,
+        children: [],
+        value: "",
+      },
+      error: {
+        code: "NO_CHARS_AFTER_ARG_SEPARATOR",
+        message: "(9:9) error: Expected '\"'",
+        start: 9,
+        end: 9,
+      },
+    },
+  ],
+  [
+    '[Sum("1",,"3")]',
+    {
+      expression: {
+        type: "expression",
+        start: 0,
+        end: 0,
+        children: [],
+        value: "",
+      },
+      error: {
+        code: "NO_CHARS_AFTER_ARG_SEPARATOR",
+        message: "(9:9) error: Expected '\"'",
+        start: 9,
+        end: 9,
+      },
+    },
+  ],
+  [
+    '[Sum("[Sum("0")]")]',
+    {
+      expression: {
+        type: "expression",
+        start: 0,
+        end: 19,
         children: [
           {
             type: "func",
             start: 0,
-            end: 38,
+            end: 18,
             children: [
               {
                 type: "expression",
-                start: 5,
-                end: 5,
-                children: [{ type: "constant", start: 5, end: 5, value: "1" }],
-                value: "",
-              },
-              {
-                type: "expression",
-                start: 9,
+                start: 6,
                 end: 15,
-                children: [
-                  { type: "constant", start: 9, end: 12, value: "c:\\" },
-                  { type: "variable", start: 13, end: 15, name: "A" },
-                ],
-                value: "c:\\\\[A",
-              },
-              {
-                type: "expression",
-                start: 19,
-                end: 35,
                 children: [
                   {
                     type: "func",
-                    start: 19,
-                    end: 29,
+                    start: 6,
+                    end: 15,
+                    children: [
+                      {
+                        type: "expression",
+                        start: 12,
+                        end: 12,
+                        children: [
+                          { type: "constant", start: 12, end: 12, value: "0" },
+                        ],
+                        value: "0",
+                      },
+                    ],
+                    name: "Sum",
+                  },
+                ],
+                value: '[Sum("0")]',
+              },
+            ],
+            name: "Sum",
+          },
+        ],
+        value: '[Sum("[Sum("0")]")]',
+      },
+    },
+  ],
+  [
+    '[Sum("1","2[V1]","[Sum("[V2]")][Sum("1","3")]")]',
+    {
+      expression: {
+        type: "expression",
+        start: 0,
+        end: 48,
+        children: [
+          {
+            type: "func",
+            start: 0,
+            end: 47,
+            children: [
+              {
+                type: "expression",
+                start: 6,
+                end: 6,
+                children: [{ type: "constant", start: 6, end: 6, value: "1" }],
+                value: "1",
+              },
+              {
+                type: "expression",
+                start: 10,
+                end: 14,
+                children: [
+                  { type: "constant", start: 10, end: 10, value: "2" },
+                  { type: "variable", start: 11, end: 14, name: "V1" },
+                ],
+                value: "2[V1]",
+              },
+              {
+                type: "expression",
+                start: 18,
+                end: 44,
+                children: [
+                  {
+                    type: "func",
+                    start: 18,
+                    end: 30,
                     children: [
                       {
                         type: "expression",
                         start: 24,
-                        end: 26,
+                        end: 27,
                         children: [
-                          { type: "variable", start: 24, end: 26, name: "B" },
+                          { type: "variable", start: 24, end: 27, name: "V2" },
                         ],
-                        value: "[B",
+                        value: "[V2]",
                       },
                     ],
-                    name: "F2",
+                    name: "Sum",
                   },
                   {
                     type: "func",
-                    start: 30,
-                    end: 35,
-                    children: [],
-                    name: "F3",
+                    start: 31,
+                    end: 44,
+                    children: [
+                      {
+                        type: "expression",
+                        start: 37,
+                        end: 37,
+                        children: [
+                          { type: "constant", start: 37, end: 37, value: "1" },
+                        ],
+                        value: "1",
+                      },
+                      {
+                        type: "expression",
+                        start: 41,
+                        end: 41,
+                        children: [
+                          { type: "constant", start: 41, end: 41, value: "3" },
+                        ],
+                        value: "3",
+                      },
+                    ],
+                    name: "Sum",
                   },
                 ],
-                value: '[F2("[B]")][F3()',
+                value: '[Sum("[V2]")][Sum("1","3")]',
               },
             ],
-            name: "F1",
+            name: "Sum",
           },
         ],
-        value: '[F1("1","c:\\\\[A]","[F2("[B]")][F3()]")]',
+        value: '[Sum("1","2[V1]","[Sum("[V2]")][Sum("1","3")]")]',
       },
     },
   ],

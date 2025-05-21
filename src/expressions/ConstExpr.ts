@@ -7,7 +7,7 @@ export class ConstExpr extends BaseExpr<"constant"> {
     this.value = value;
   }
 
-  evaluate() {
+  async evaluate() {
     return this.value;
   }
 }

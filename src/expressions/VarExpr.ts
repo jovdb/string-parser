@@ -7,18 +7,33 @@ export class VarExpr extends BaseExpr<"variable"> {
     this.name = name;
   }
 
-  evaluate(
+  async evaluate(
     context: IEvaluateContext,
     onError?: (error: IEvaluateError) => void
-  ): Promise<string> | string | undefined {
+  ): Promise<string | undefined> {
     const fn = context.variables[this.name];
     if (fn === undefined) {
       onError?.({
         code: "UNKNOWN_VARIABLE",
-        message: `Unknown variable '${this.name}'`,
+        start: this.start,
+        end: this.end,
+        message: `Unknown variable '${
+          this.name
+        }'. Available variables: ${Object.keys(context.variables).join(", ")}`,
       });
       return undefined;
     }
-    return fn();
+
+    try {
+      return await fn();
+    } catch (error) {
+      onError?.({
+        code: "FUNCTION_ERROR",
+        start: this.start,
+        end: this.end,
+        message: `Error executing variable '${this.name}': ${error.message}`,
+      });
+      return undefined;
+    }
   }
 }

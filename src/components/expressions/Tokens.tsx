@@ -19,7 +19,7 @@ export function Tokens({
       {tokens.map((token) => (
         <Token
           input={input}
-          key={`${token.start}-${token.end}`}
+          key={`token-${token.start}-${token.end}`}
           token={token}
           highlight={
             highlightIndex !== undefined &&

@@ -26,7 +26,7 @@ export function ExpressionTree({
     >
       {items.map((item) => (
         <ExpressionItem
-          key={`${item.start}-${item.end}`}
+          key={`item-${item.start}-${item.end}`}
           item={item}
           highLightItem={highLightItem}
           input={input}

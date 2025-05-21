@@ -62,8 +62,8 @@ export function ExpressionPage() {
           <optgroup label="Valid">
             {expectations
               ?.filter(([_, expectation]) => !expectation.error)
-              .map(([expr, expectation], index) => (
-                <option key={expr} value={expr}>
+              .map(([expr]) => (
+                <option key={`select-${expr}`} value={expr}>
                   {expr}
                 </option>
               ))}
@@ -71,8 +71,8 @@ export function ExpressionPage() {
           <optgroup label="Invalid">
             {expectations
               ?.filter(([_, expectation]) => expectation.error)
-              .map(([expr, expectation], index) => (
-                <option key={expr} value={expr}>
+              .map(([expr]) => (
+                <option key={`select-${expr}`} value={expr}>
                   {expr}
                 </option>
               ))}
@@ -105,11 +105,34 @@ export function ExpressionPage() {
           onClick={async () => {
             const context: IEvaluateContext = {
               variables: {
-                A: () => "value of A",
-                B: async () => "value of B",
+                V1: () => "1",
+                V2: async () => "2",
+              },
+              functions: {
+                Date: async () => {
+                  return new Date().toISOString();
+                },
+
+                Sum: (...args: string[]) => {
+                  const numbers = args.map((arg) =>
+                    arg ? parseFloat(arg) : 0
+                  );
+                  numbers.forEach((num, index) => {
+                    if (isNaN(num)) {
+                      throw new Error(`Argument ${index + 1}: Invalid number`);
+                    }
+                  });
+                  return `${numbers.reduce((acc, curr) => acc + curr, 0)}`;
+                },
               },
             };
-            const value = await parser.expression.evaluate(context, alert);
+
+            let hasError = false;
+            const value = await parser.expression.evaluate(context, (error) => {
+              hasError = true;
+              alert(`ERROR: ${JSON.stringify(error)}`);
+            });
+            if (hasError) return;
             alert(value);
           }}
         >

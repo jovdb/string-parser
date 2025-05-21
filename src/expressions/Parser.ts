@@ -86,6 +86,7 @@ export function parser(input: string) {
         const funcExpr = funcStack.pop()!;
         funcExpr.end = token.end + 1;
         ast.push(funcExpr);
+        break;
       }
 
       case "]": {
@@ -100,11 +101,16 @@ export function parser(input: string) {
           const varExpr = new VarExpr(start, end, varName);
           ast.push(varExpr);
         }
-
         tokenStack.splice(startTokenIndex, tokenStack.length - startTokenIndex);
         break;
       }
+    
       default: {
+        const lastToken = tokenStack.at(-1);
+        if (lastToken?.type === ")") {
+          debugger;
+        }
+        
         tokenStack.push(token);
       }
     }

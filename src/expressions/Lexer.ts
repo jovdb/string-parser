@@ -63,6 +63,8 @@ export function* lexer(
   let index = -1;
   let lastTokenEndIndex = -1;
   let argCount = 0;
+  /** Set to true after ) and before ] */
+  let afterFunction = false;
 
   function validateBlockNameChar(
     lastStackItem: IToken | undefined,
@@ -103,6 +105,7 @@ export function* lexer(
     return "constant";
   }
 
+  /** Get the string/buffer before the current token */
   function getBeforeToken() {
     if (buffer.length > 0) {
       const token = new Token(getTextType(), lastTokenEndIndex + 1, {
@@ -180,6 +183,9 @@ export function* lexer(
       }
     } else if (char === "]") {
       if (lastStackItem?.type === "[") {
+        // Detect if it the close of a variable or function
+        const isVariable = lastStackItem.end === lastTokenEndIndex;
+
         // Before [
         const beforeToken = getBeforeToken();
         if (beforeToken) {
@@ -192,6 +198,7 @@ export function* lexer(
         lastTokenEndIndex = index;
         yield token;
 
+        afterFunction = false;
         // Empty
         if (lastStackItem.end === index - 1) {
           onError?.(
@@ -218,6 +225,8 @@ export function* lexer(
         tokenStack.pop(); // remove (
         lastTokenEndIndex = index;
         yield token;
+
+        afterFunction = true;
         continue;
       }
     } else if (char === '"') {
@@ -280,32 +289,34 @@ export function* lexer(
     // Validate allowed input characters
     if (!validateBlockNameChar(lastStackItem, char)) {
     } else if (lastStackItem?.type === "[") {
-      // If we are building a block name
-      const regEx = buffer.length === 1 ? "^[a-zA-Z]" : "^[a-zA-Z0-9-_*]$";
-      const code =
-        buffer.length === 1
-          ? "INVALID_BLOCK_NAME_FIRST_CHAR"
-          : "INVALID_BLOCK_NAME_CHAR";
-
-      if (!RegExp(regEx).test(char)) {
+      if (afterFunction) {
+        // After a function
         onError?.(
           createError({
-            code,
+            code: "NO_CHARS_AFTER_FUNCTION",
             start: index,
             end: index,
-            value: char,
           })
         );
+      } else {
+        // If we are building a block name
+        const regEx = buffer.length === 1 ? "^[a-zA-Z]" : "^[a-zA-Z0-9-_*]$";
+        const code =
+          buffer.length === 1
+            ? "INVALID_BLOCK_NAME_FIRST_CHAR"
+            : "INVALID_BLOCK_NAME_CHAR";
+
+        if (!RegExp(regEx).test(char)) {
+          onError?.(
+            createError({
+              code,
+              start: index,
+              end: index,
+              value: char,
+            })
+          );
+        }
       }
-    } else if (lastStackItem?.type === ")") {
-      // After a function
-      onError?.(
-        createError({
-          code: "NO_CHARS_AFTER_FUNCTION",
-          start: index,
-          end: index,
-        })
-      );
     } else if (lastStackItem?.type === "(") {
       // No extra characters between function arguments
 

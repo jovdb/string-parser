@@ -49,7 +49,7 @@ export function createError({
       break;
     }
     case "INVALID_BLOCK_NAME_CHAR": {
-      errorMessage = `Invalid character in block name: '${value}', Expected: Alphanumeric, "_" or "-"`;
+      errorMessage = `Invalid character in block name: '${value}', Expected: Alphanumeric, "_", "-" or "(" to start a function)`;
       break;
     }
     case "NO_CHARS_AFTER_FUNCTION": {
