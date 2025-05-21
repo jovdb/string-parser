@@ -1,8 +1,7 @@
 {
-  "name": "parser",
-  "version": "0.0.0",
+  "name": "string-parser",
+  "version": "1.0.0",
   "type": "module",
-  "private": true,
   "scripts": {
     "dev": "waku dev",
     "build": "waku build",
