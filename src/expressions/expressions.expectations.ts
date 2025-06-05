@@ -4,7 +4,7 @@ import type { ISyntaxError } from "./errors";
 const expectationsTemp: [
   string,
   {
-    expression: {} | Partial<IExprItem>;
+    expression: object | Partial<IExprItem>;
     error?: Partial<ISyntaxError>;
   }
 ][] = [

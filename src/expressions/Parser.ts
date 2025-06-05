@@ -44,7 +44,7 @@ export function parser(input: string) {
       case "(": {
         // Get function name
         const functionName = lastStackItem!.value!;
-        const start = tokenStack.at(-2)?.start!;
+        const start = tokenStack.at(-2)!.start;
         const end = token.end;
         const funcExpr = new FuncExpr(start, end, functionName);
 
@@ -104,13 +104,8 @@ export function parser(input: string) {
         tokenStack.splice(startTokenIndex, tokenStack.length - startTokenIndex);
         break;
       }
-    
+
       default: {
-        const lastToken = tokenStack.at(-1);
-        if (lastToken?.type === ")") {
-          debugger;
-        }
-        
         tokenStack.push(token);
       }
     }

@@ -61,7 +61,7 @@ export function ExpressionPage() {
         >
           <optgroup label="Valid">
             {expectations
-              ?.filter(([_, expectation]) => !expectation.error)
+              ?.filter(([, expectation]) => !expectation.error)
               .map(([expr]) => (
                 <option key={`select-${expr}`} value={expr}>
                   {expr}
@@ -70,7 +70,7 @@ export function ExpressionPage() {
           </optgroup>
           <optgroup label="Invalid">
             {expectations
-              ?.filter(([_, expectation]) => expectation.error)
+              ?.filter(([, expectation]) => expectation.error)
               .map(([expr]) => (
                 <option key={`select-${expr}`} value={expr}>
                   {expr}

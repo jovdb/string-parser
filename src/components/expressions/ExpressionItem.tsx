@@ -51,6 +51,7 @@ export function ExpressionItem({
             border: "1px solid #ccc",
           }}
         >
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {(item as any).name ?? (item as any).value}
         </code>{" "}
       </div>

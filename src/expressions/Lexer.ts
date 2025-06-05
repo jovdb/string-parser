@@ -59,7 +59,7 @@ export function* lexer(
 ) {
   let buffer = "";
   let escapeNext = false;
-  let tokenStack: IToken[] = [];
+  const tokenStack: IToken[] = [];
   let index = -1;
   let lastTokenEndIndex = -1;
   let argCount = 0;
@@ -288,6 +288,7 @@ export function* lexer(
 
     // Validate allowed input characters
     if (!validateBlockNameChar(lastStackItem, char)) {
+      // Invalid
     } else if (lastStackItem?.type === "[") {
       if (afterFunction) {
         // After a function

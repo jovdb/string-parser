@@ -31,6 +31,7 @@ export class VarExpr extends BaseExpr<"variable"> {
         code: "FUNCTION_ERROR",
         start: this.start,
         end: this.end,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         message: `Error executing variable '${this.name}': ${(error as any).message}`,
       });
       return undefined;
