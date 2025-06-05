@@ -1,5 +1,5 @@
 "use client";
-import { IExprItem } from "../../expressions/BaseExpr";
+import type { IExprItem } from "../../expressions/BaseExpr";
 import { ExpressionTree } from "./ExpressionTree";
 
 export function ExpressionItem({
@@ -51,7 +51,7 @@ export function ExpressionItem({
             border: "1px solid #ccc",
           }}
         >
-          {item.name ?? item.value}
+          {(item as any).name ?? (item as any).value}
         </code>{" "}
       </div>
 

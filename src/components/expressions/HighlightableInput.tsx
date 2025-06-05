@@ -1,4 +1,4 @@
-import React, { CSSProperties, useRef, useEffect, useCallback } from "react";
+import React, { type CSSProperties, useRef, useEffect, useCallback } from "react";
 
 interface HighlightableInputProps {
   value: string;

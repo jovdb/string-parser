@@ -1,4 +1,4 @@
-import { BaseExpr, IEvaluateContext, IEvaluateError } from "./BaseExpr";
+import { BaseExpr, type IEvaluateContext, type IEvaluateError } from "./BaseExpr";
 
 export class VarExpr extends BaseExpr<"variable"> {
   readonly name: string;
@@ -31,7 +31,7 @@ export class VarExpr extends BaseExpr<"variable"> {
         code: "FUNCTION_ERROR",
         start: this.start,
         end: this.end,
-        message: `Error executing variable '${this.name}': ${error.message}`,
+        message: `Error executing variable '${this.name}': ${(error as any).message}`,
       });
       return undefined;
     }

@@ -1,5 +1,5 @@
 // import { BaseExpr } from "./BaseExpr";
-import { BaseExpr, IEvaluateContext, IEvaluateError } from "./BaseExpr";
+import { BaseExpr, type IEvaluateContext, type IEvaluateError } from "./BaseExpr";
 import { Expression } from "./Expression";
 
 export class FuncExpr extends BaseExpr<"func"> {
@@ -42,7 +42,8 @@ export class FuncExpr extends BaseExpr<"func"> {
         code: "FUNCTION_ERROR",
         start: this.start,
         end: this.end,
-        message: `Error executing function '${this.name}': ${error.message}`,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        message: `Error executing function '${this.name}': ${(error as any).message}`,
       });
       return undefined;
     }

@@ -1,10 +1,10 @@
-import { IExprItem } from "./BaseExpr";
-import { ISyntaxError } from "./errors";
+import type { IExprItem } from "./BaseExpr";
+import type { ISyntaxError } from "./errors";
 
 const expectationsTemp: [
   string,
   {
-    expression: Partial<IExprItem[]>;
+    expression: {} | Partial<IExprItem>;
     error?: Partial<ISyntaxError>;
   }
 ][] = [

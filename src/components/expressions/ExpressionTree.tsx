@@ -1,5 +1,5 @@
 "use client";
-import { IExprItem } from "../../expressions/BaseExpr";
+import type { IExprItem } from "../../expressions/BaseExpr";
 import { ExpressionItem } from "./ExpressionItem";
 
 export function ExpressionTree({

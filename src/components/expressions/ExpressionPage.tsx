@@ -1,9 +1,9 @@
 "use client";
 import { useState } from "react";
 import { ExpressionTree } from "./ExpressionTree";
-import { IEvaluateContext, IExprItem } from "../../expressions/BaseExpr";
+import type { IEvaluateContext, IExprItem } from "../../expressions/BaseExpr";
 import { HighlightableInput } from "./HighlightableInput";
-import { IToken, lexer, Token } from "../../expressions/Lexer";
+import { type IToken, lexer } from "../../expressions/Lexer";
 import { Tokens } from "./Tokens";
 import { expectations } from "../../expressions/expressions.expectations";
 import { Parser } from "../../expressions/Parser";
@@ -24,7 +24,7 @@ function useExpression() {
     tokens,
     parser,
     setValue(newValue: string) {
-      setExpression((prev) => ({
+      setExpression(() => ({
         value: newValue,
         tokens: [...lexer(newValue, undefined)],
         parser: new Parser(newValue),
@@ -159,7 +159,6 @@ export function ExpressionPage() {
       <h2>Tokens</h2>
       <Tokens
         tokens={tokens}
-        input={value}
         highlightIndex={highLightTokenIndex}
         onHover={(hoveredItem) => {
           setHighlightedInputItem(hoveredItem);

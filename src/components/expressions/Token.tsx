@@ -1,14 +1,12 @@
 "use client";
-import { Input } from "postcss";
-import { IToken } from "../../expressions/Lexer";
+
+import type { IToken } from "../../expressions/Lexer";
 
 export function Token({
-  input,
   highlight,
   token,
   onHover,
 }: {
-  input: string;
   highlight?: boolean;
   token: IToken;
   onHover?: (isEnter: boolean) => void;

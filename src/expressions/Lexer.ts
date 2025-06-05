@@ -1,6 +1,6 @@
 // Split in parts
 
-import { createError, ISyntaxError } from "./errors";
+import { createError, type ISyntaxError } from "./errors";
 
 // Because tokens have no double meaning yet, I used the character as token name
 export type TokenType =
@@ -184,7 +184,7 @@ export function* lexer(
     } else if (char === "]") {
       if (lastStackItem?.type === "[") {
         // Detect if it the close of a variable or function
-        const isVariable = lastStackItem.end === lastTokenEndIndex;
+        // const isVariable = lastStackItem.end === lastTokenEndIndex;
 
         // Before [
         const beforeToken = getBeforeToken();

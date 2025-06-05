@@ -1,4 +1,4 @@
-import { BaseExpr, IEvaluateContext, IEvaluateError } from "./BaseExpr";
+import { BaseExpr, type IEvaluateContext, type IEvaluateError } from "./BaseExpr";
 
 export class Expression extends BaseExpr<"expression"> {
   readonly value: string;

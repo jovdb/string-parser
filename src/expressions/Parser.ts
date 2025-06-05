@@ -1,11 +1,11 @@
-import { BaseExpr, IEvaluateContext, IEvaluateError } from "./BaseExpr";
+import { BaseExpr } from "./BaseExpr";
 import { ConstExpr } from "./ConstExpr";
 import { Expression } from "./Expression";
 import { FuncExpr } from "./FuncExpr";
-import { IToken, lexer } from "./Lexer";
+import { type IToken, lexer } from "./Lexer";
 import { VarExpr } from "./VarExpr";
 
-import { ISyntaxError } from "./errors";
+import type { ISyntaxError } from "./errors";
 
 export function parser(input: string) {
   const tokenStack: IToken[] = [];
@@ -15,7 +15,7 @@ export function parser(input: string) {
   const root: BaseExpr<string>[] = [];
 
   /* Where to add, root, nested function arguments */
-  let astStack: BaseExpr<string>[][] = [root];
+  const astStack: BaseExpr<string>[][] = [root];
 
   let error: ISyntaxError | undefined;
 

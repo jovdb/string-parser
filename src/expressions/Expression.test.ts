@@ -1,7 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { expectations } from "./expressions.expectations";
 import { Parser } from "./Parser";
-import { Expression } from "./Expression";
 
 describe("expression", () => {
   test.for(expectations.slice(1, 99))(

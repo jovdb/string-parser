@@ -1,15 +1,13 @@
 "use client";
-import { IToken } from "../../expressions/Lexer";
+import type { IToken } from "../../expressions/Lexer";
 import { Token } from "./Token";
 
 export function Tokens({
   tokens,
-  input,
   highlightIndex,
   onHover,
 }: {
   tokens: IToken[] | undefined;
-  input: string;
   highlightIndex?: number | undefined;
   onHover?: (token: IToken | undefined) => void;
 }) {
@@ -18,7 +16,6 @@ export function Tokens({
     <div className="tokens">
       {tokens.map((token) => (
         <Token
-          input={input}
           key={`token-${token.start}-${token.end}`}
           token={token}
           highlight={

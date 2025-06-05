@@ -1,5 +1,3 @@
-import { Expression } from "./Expression";
-
 export interface IExprItem<TType extends string = string> {
   readonly type: TType;
   readonly start: number;
