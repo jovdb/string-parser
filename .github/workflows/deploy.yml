@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build Waku app
+      - name: Build app
         run: npm run build
 
       - name: Setup Pages
@@ -39,8 +39,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Waku's static output for 'render: "static"' is typically in 'dist/public'
-          path: "./dist/public"
+          path: "./dist"
 
       - name: Deploy to GitHub Pages
         id: deployment
